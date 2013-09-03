@@ -1,34 +1,33 @@
-﻿
-var namespace = (function (global) {
-    /**
-    * Creates an Object following the specified namespace identifier.
-    */
-    return function (identifier, objects) {
-        var ns = global, parts, i, item;
+﻿var namespace = (function (global) {
+/**
+* Creates an Object following the specified namespace identifier.
+*/
+return function (identifier, objects) {
+    var ns = global, parts, i, item;
 
-        if (identifier !== '') {
-            parts = identifier.split('.');
-            for (i = 0; i < parts.length; i++) {
-                if (!ns[parts[i]]) {
-                    ns[parts[i]] = {};
-                }
-
-                ns = ns[parts[i]];
+    if (identifier !== '') {
+        parts = identifier.split('.');
+        for (i = 0; i < parts.length; i++) {
+            if (!ns[parts[i]]) {
+                ns[parts[i]] = {};
             }
-        }
 
-        if (!objects) {
-            return ns;
+            ns = ns[parts[i]];
         }
+    }
 
-        for (item in objects) {
-            if (objects.hasOwnProperty(item)) {
-                ns[item] = objects[item];
-            }
-        }
-
+    if (!objects) {
         return ns;
-    };
+    }
+
+    for (item in objects) {
+        if (objects.hasOwnProperty(item)) {
+            ns[item] = objects[item];
+        }
+    }
+
+    return ns;
+};
 } (window));
 
 ; namespace('mdsol.ajax');
@@ -37,45 +36,166 @@ var namespace = (function (global) {
 
 var mdsol = mdsol || {};
 
-mdsol.DEBUG = true;
+mdsol = (function (mdsol, undefined) {
+    var REGEX_TRIM = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
+        REGEX_VALID_CHARS = /^[\],:{}\s]*$/,
+	    REGEX_VALID_BRACES = /(?:^|:|,)(?:\s*\[)+/g,
+	    REGEX_VALID_ESCAPE = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
+	    REGEX_VALID_TOKENS = /"[^"\\\r\n]*"|true|false|null|-?(?:\d\d*\.|)\d+(?:[eE][\-+]?\d+|)/g,
+        IS_DONTENUM_BUGGY = (function () {
+            // Thanks Prototype! (https://github.com/sstephenson/prototype/blob/master/src/prototype/lang/class.js)
 
-mdsol.Core = (function (undefined) {
-    var _error = function (msg) {
-            throw new Error(msg);
+            // Some versions of JScript fail to enumerate over properties, names of which 
+            // correspond to non-enumerable properties in the prototype chain. IE6 doesn't
+            // enumerate `toString` and `valueOf` (among other built-in `Object.prototype`)
+            // properties.
+            for (var p in { toString: 1 }) {
+                if (p === 'toString') {
+                    return false;
+                }
+            }
+            return true;
+        })();
+
+    mdsol.DEBUG = true;
+
+    var _regexCx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+        _nativeArray = ([]),
+        _nativeObject = ({}),
+        _protoTrim = String.prototype.trim,
+        _protoSlice = _nativeArray.slice,
+        _protoPush = _nativeArray.push,
+        _protoToString = _nativeObject.toString,
+        _protoHasOwn = _nativeObject.hasOwnProperty,
+        _isArray = typeof Array.isArray !== 'function' || function (obj) {
+            return _protoToString.call(obj) === '[object Array]';
         },
-        _getType = function (o) {
-            return ({}).toString.call(o).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        _isObject = function (o) {
+            return _protoToString.call(o) === '[object Object]';
         },
-        _isString = function (o) {
-            return typeof o === 'string';
-        },
-        _isArray = Array.isArray || function (o) {
-            return _getType(o) === 'array';
-        },
-        _toArray = function (v) {
-            if (v === null || v === undefined) {
+        _toArray = function (value) {
+            if (value === null || value === undefined) {
                 return [];
-            } else if (_isArray(v)) {
-                return v;
+            } else if (_isArray(value)) {
+                return value;
             }
 
-            return [v];
+            // It would make sense at this point to add functionality to convert
+            // an 'arguments' object to an actual array. Due to the overhead of
+            // testing if 'value' is an actual 'Arguments' object accurately and
+            // cross-browser, however, we will maintain makeArray() separately.
+
+            return [value];
         },
-        _makeArray = function (arr, index) {
-            return Array.prototype.slice.call(arr, index || 0);
+        _keys = typeof Object.keys !== 'function' || function (obj) {
+            var result = [], k;
+
+            // This is subject to various browser bugs. However, this framework currently
+            // assumes the ES5 shim is used we should therefore never even get here.
+            // Consider removing the shim as a dependency.
+
+            for (k in obj) {
+                if (_protoHasOwn.call(obj, k)) {
+                    result.push(k);
+                }
+            }
+
+            return result;
         },
+        _clone = function (o) {
+            var array = _isArray(o),
+                object = !array && _isObject(o),
+                clone, p;
+
+            if (array || object) {
+                if (typeof o.clone === 'function') {
+                    return o.clone();
+                }
+
+                clone = array ? [] : {};
+
+                // See comment in declaration of IS_DONTENUM_BUGGY for details
+                if (object && IS_DONTENUM_BUGGY) {
+                    if (o.toString !== _nativeObject.toString) {
+                        clone.toString = o.toString;
+                    }
+                    if (o.valueOf !== _nativeObject.valueOf) {
+                        clone.valueOf = o.valueOf;
+                    }
+                }
+
+                for (p in o) {
+                    clone[p] = _clone(o[p]);
+                }
+
+                return clone;
+            }
+
+            return o;
+        },
+        _extend = function (/*[ deep,] target, srcA[, srcB[, ...]] */) {
+            var a = _protoSlice.call(arguments),
+                shallow = true,
+                tgt, src,
+                o, p, i, v,
+                len;
+
+            if (typeof a[0] === 'boolean') {
+                shallow = !a.shift();
+            }
+
+            tgt = a.shift();
+            src = _toArray(a);
+
+            // Clone each object
+            for (i = 0, len = src.length; i < len; i++) {
+                o = src[i] || {};
+
+                // See comment in declaration of IS_DONTENUM_BUGGY for details
+                if (IS_DONTENUM_BUGGY) {
+                    if (o.toString !== _nativeObject.toString) {
+                        tgt.toString = o.toString;
+                    }
+                    if (o.valueOf !== _nativeObject.valueOf) {
+                        tgt.valueOf = o.valueOf;
+                    }
+                }
+                
+                // Clone next object
+                for (p in o) {
+                    if (o.hasOwnProperty(p)) {
+                        v = o[p];
+                        if (!shallow && v && _isObject(v)) {
+                            tgt[p] = tgt[p] || {};
+                            _extend(true, tgt[p], v);
+                        } else {
+                            tgt[p] = v;
+                        }
+                    }
+                }
+            }
+
+            return tgt;
+        },
+        _trim = _protoTrim && !_protoTrim.call('\uFEFF\xA0') ?
+            function (text) {
+                return text === null ? '' : _protoTrim.call(text);
+            } :
+            function (text) {
+                return text === null ? '' : (text + '').replace(REGEX_TRIM, '');
+            },
         _global = (function () {
             // ReSharper disable HeuristicallyUnreachableCode
-            // Access to global object without referencing window directly (strict mode compliant)
+            // Access to global object without referencing window directly 
+            // (strict mode compliant)
             return this || (1, eval)('this');
             // ReSharper restore HeuristicallyUnreachableCode
         } ());
 
-    return {
-        noop: function() {
-            return function() {};
-        },
-        
+    // Extend our base object with our public methods
+    return _extend(mdsol, {
+        clone: _clone,
+
         each: function (array, action) {
             var i, len;
 
@@ -83,7 +203,11 @@ mdsol.Core = (function (undefined) {
                 action(array[i]);
             }
 
-            return Util;
+            return mdsol;
+        },
+
+        error: function (msg) {
+            throw new Error(msg);
         },
 
         exists: function (identifier) {
@@ -107,12 +231,16 @@ mdsol.Core = (function (undefined) {
             return true;
         },
 
-        error: _error,
+        extend: _extend,
+
+        getType: function (o) {
+            return _protoToString.call(o).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
+        },
 
         getValue: function (o, identifier) {
             var a = identifier.split('.'),
-                item = o,
-                i, len;
+            item = o,
+            i, len;
 
             for (i = 0, len = a.length; i < len && item; i++) {
                 item = a[i] in item ? item[a[i]] : undefined;
@@ -121,87 +249,100 @@ mdsol.Core = (function (undefined) {
             return item;
         },
 
-        getGlobal: function () {
-            return _global;
+        global: _global,
+
+        isArray: _isArray,
+
+        isDate: function (o) {
+            return _protoToString.call(o) === '[object Date]';
         },
 
-        getType: _getType,
+        isEmpty: function (o) {
+            var p;
+
+            if (o === null || o === undefined) {
+                return true;
+            } else if (typeof o === 'string' || _isArray(o)) {
+                return !!o.length;
+            } else if (!_isObject(o)) {
+                throw new TypeError('Invalid data type.');
+            }
+
+            for (p in o) {
+                return !p;
+            }
+
+            return true;
+        },
 
         isFunction: function (o) {
             return typeof o === 'function';
         },
 
-        isObject: function (o) {
-            return _getType(o) === 'object';
-        },
-
-        isDate: function (o) {
-            return _getType(o) === 'date';
-        },
-
-        isString: _isString,
-
-        isNumber: function(o) {
+        isNumber: function (o) {
             return typeof o === 'number';
         },
 
-        isArray: _isArray,
+        isObject: _isObject,
 
-        toArray: _toArray,
-
-        toJson: function (o) {
-            var result = '',
-                values,
-                pairs,
-                i, len;
-
-            if (!o) {
-                result = ' ';
-            } else if (_isArray(o)) {
-                for (i = 0, len = o.length; i < len; i++) {
-                    result += '"' + o[i].name + '":"' + o[i].value + '",';
-                }
-            } else if (_isString(o)) {
-                pairs = o.split('&');
-                for (i = 0; i < pairs.length; i++) {
-                    values = pairs[i].split('=');
-                    result += '"' + values[0] + '":"' + ((values.length > 1) ? values[1] : '') + '",';
-                }
-            } else {
-                values = Object.keys(o);
-                for (i = 0; i < values.length; i++) {
-                    result += '"' + values[i] + '":"' + o[values[i]] + '",';
-                }
-            }
-
-            return '{' + result.slice(0, -1) + '}';
+        isOwn: function (obj, key) {
+            return _protoHasOwn.call(obj, key);
         },
 
-        makeArray: _makeArray
-    };
-} ());
+        isPlainObject: function (o) {
+            var key;
 
-mdsol.String = (function (mdsol, undefined) {
-    var REGEX_TRIM = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g,
-    	REGEX_VALID_CHARS = /^[\],:{}\s]*$/,
-	    REGEX_VALID_BRACES = /(?:^|:|,)(?:\s*\[)+/g,
-	    REGEX_VALID_ESCAPE = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
-	    REGEX_VALID_TOKENS = /"[^"\\\r\n]*"|true|false|null|-?(?:\d\d*\.|)\d+(?:[eE][\-+]?\d+|)/g;
+            // Borrowed for jQuery v1.8.2 (why re-invent the wheel)
 
-    var _regexCx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
-        _global = mdsol.Core.getGlobal(),
-        _protoTrim = String.prototype.trim,
-        _core = mdsol.Core,
-        _trim = _protoTrim && !_protoTrim.call('\uFEFF\xA0') ?
-            function (text) {
-                return text === null ? '' : _protoTrim.call(text);
-            } :
-            function (text) {
-                return text === null ? '' : (text + '').replace(REGEX_TRIM, '');
-            };
+            // Must be an Object.
+            // Because of IE, we also have to check the presence of the constructor property.
+            // Make sure that DOM nodes and window objects don't pass through, as well
+            if (!o || !_isObject(o) || o.nodeType || o === o.window) {
+                return false;
+            }
 
-    return {
-        trim: _trim,
+            try {
+                // Not own constructor property must be Object
+                if (o.constructor &&
+                !_protoHasOwn.call(o, 'constructor') &&
+                !_protoHasOwn.call(o.constructor.prototype, 'isPrototypeOf')) {
+                    return false;
+                }
+            } catch (e) {
+                // IE8,9 Will throw exceptions on certain host objects #9897
+                return false;
+            }
+
+            // Own properties are enumerated firstly, so to speed up,
+            // if last one is own, then all properties are own.
+            for (key in o) { }
+
+            return key === undefined || _protoHasOwn.call(o, key);
+        },
+
+        isString: function (o) {
+            return typeof o === 'string';
+        },
+
+        keys: _keys,
+
+        makeArray: function (arr, index) {
+            // For performance sake, this is a separate method from toArray
+
+            return _protoSlice.call(arr, index || 0);
+        },
+
+        merge: function () {
+            var args = [{}];
+
+            _protoPush.apply(args, arguments);
+
+            return _extend.apply(this, args);
+        },
+
+        noop: function () {
+            return function () { };
+        },
 
         parseJson: function (text) {
             var data = _trim(text);
@@ -223,288 +364,313 @@ mdsol.String = (function (mdsol, undefined) {
             }
 
             if (REGEX_VALID_CHARS.test(data.replace(REGEX_VALID_ESCAPE, '@')
-			    .replace(REGEX_VALID_TOKENS, ']')
-			    .replace(REGEX_VALID_BRACES, ''))) {
+            .replace(REGEX_VALID_TOKENS, ']')
+            .replace(REGEX_VALID_BRACES, ''))) {
 
                 return (new Function('return ' + data))();
 
             }
 
-            return _core.error('Failed to parse JSON data');
-        }
-    };
-} (mdsol));
+            throw new Error('Failed to parse JSON data.');
+        },
 
-mdsol.Object = (function (mdsol, undefined) {
-    var _protoToString = Object.prototype.toString,
-        _protoHasOwn = Object.prototype.hasOwnProperty,
-        _objString = _protoToString.call({}),
-        _core = mdsol.Core,
-        _isArray = _core.isArray,
-        _isObject = _core.isObject,
-        _makeArray = _core.makeArray,
-        _toArray = _core.toArray,
-        _clone = function (o) {
-            var array = _isArray(o),
-                object = !array && _isObject(o),
-                clone, p;
+        toArray: _toArray,
 
-            if (array || object) {
-                if (o.clone) {
-                    return o.clone();
+        toJson: function (o) {
+            var result = '',
+            values,
+            pairs,
+            i, len;
+
+            // This is far from robust, but it gets the job done for now
+            // TODO: Refactor
+
+            if (!o) {
+                result = ' ';
+            } else if (_isArray(o)) {
+                // Assume array of objects containing 'name' and 'value' properties
+                for (i = 0, len = o.length; i < len; i++) {
+                    result += '"' + o[i].name + '":"' + o[i].value + '",';
                 }
-
-                clone = array ? [] : {};
-                for (p in o) {
-                    clone[p] = _clone(o[p]);
-                }
-
-                return clone;
-            }
-
-            return o;
-        },
-
-        _extend = function (/*[ deep,] target, srcA[, srcB[, ...]] */) {
-            var a = _makeArray(arguments),
-                shallow = true,
-                tgt, src,
-                o, p, i, v,
-                len;
-
-            if (typeof a[0] === 'boolean') {
-                shallow = !a.shift();
-            }
-
-            tgt = a.shift();
-            src = _toArray(a);
-
-            // Clone each object
-            for (i = 0, len = src.length; i < len; i++) {
-                o = src[i] || {};
-
-                // Clone next object
-                for (p in o) {
-                    if (o.hasOwnProperty(p)) {
-                        v = o[p];
-                        if (!shallow && v && _objString === _protoToString.call(v)) {
-                            tgt[p] = tgt[p] || {};
-                            _extend(true, tgt[p], v);
-                        } else {
-                            tgt[p] = v;
-                        }
-                    }
-                }
-            }
-
-            return tgt;
-        };
-
-    return {
-        clone: _clone,
-
-        extend: _extend,
-
-        merge: function () {
-            var a = [{}].concat(_makeArray(arguments));
-
-            return _extend.apply(this, a);
-        },
-
-        getKeys: function (o) {
-            var result = [], p;
-
-            for (p in o) {
-                result.push(p);
-            }
-
-            return result;
-        },
-
-        getValues: function (o) {
-            var result = [], p;
-
-            for (p in o) {
-                result.push(o[p]);
-            }
-
-            return result;
-        },
-
-        isPlainObject: function (o) {
-            var key;
-
-            // Borrowed for jQuery v1.8.2
-
-            // Must be an Object.
-            // Because of IE, we also have to check the presence of the constructor property.
-            // Make sure that DOM nodes and window objects don't pass through, as well
-            if (!o || mdsol.Core.getType(o) !== 'object' || o.nodeType || o === o.window) {
-                return false;
-            }
-
-            try {
-                // Not own constructor property must be Object
-                if (o.constructor &&
-				!_protoHasOwn.call(o, 'constructor') &&
-				!_protoHasOwn.call(o.constructor.prototype, 'isPrototypeOf')) {
-                    return false;
-                }
-            } catch (e) {
-                // IE8,9 Will throw exceptions on certain host objects #9897
-                return false;
-            }
-
-            // Own properties are enumerated firstly, so to speed up,
-            // if last one is own, then all properties are own.
-            for (key in o) { }
-
-            return key === undefined || _protoHasOwn.call(o, key);
-        },
-
-        isEmpty: function (o) {
-            var p;
-
-            for (p in o) { }
-
-            return p === undefined;
-        }
-    };
-} (mdsol));
-
-mdsol.Class = (function (mdsol, undefined) {
-    var _core = mdsol.Core,
-        _object = mdsol.Object,
-        _makeArray = _core.makeArray,
-        _error = _core.error,
-        _extend = _object.extend,
-        _inherits = function (child, parent) {
-
-        },
-        _mixin = function (target/* , sourceA [, sourceB[, ...]] */) {
-            var src = _makeArray(arguments, 1),
-                p, s;
-
-            if (_core.isFunction(target)) {
-                target = target.prototype;
-            }
-
-            while (src.length) {
-                s = src.shift();
-
-                for (p in s) {
-                    target[p] = s[p];
-                }
-            }
-
-            return target;
-        },
-        _option = function (/* [key] | [key, value] | [object] */) {
-            var o = this._options,
-                setter = this._setOption,
-                key, value, p;
-
-            if (arguments.length) {
-                key = arguments[0];
-                if (typeof key === 'string') {
-                    if (arguments.length > 1) {
-                        value = arguments[1];
-
-                        // If no setter function or it returned false, set the value
-                        if (!setter || (setter && setter({ key: key, value: value }))) {
-                            o[key] = value;
-                        }
-                    } else {
-                        // Getter
-                        if (key in o) {
-                            return o[key];
-                        } else {
-                            return _error('Invalid option provided: "' + key + '"');
-                        }
-                    }
-                } else if (_core.isObject(key)) {
-                    // Setter - argument is object of key/value pairs
-                    for (p in key) {
-                        if (key.hasOwnProperty(p)) {
-                            value = key[p];
-
-                            // If no setter function or it returned false, set the value
-                            if (!setter || (setter && setter({ key: key, value: value }))) {
-                                o[key] = value;
-                            }
-                        }
-                    }
-                } else {
-                    // Invalid arguments
-                    return _error('Invalid arguments');
+            } else if (typeof o === 'string') {
+                // Assume string of query string style name=value pairs
+                pairs = o.split('&');
+                for (i = 0, len = pairs.length; i < len; i++) {
+                    values = pairs[i].split('=');
+                    result += '"' + values[0] + '":"' + ((values.length > 1) ? values[1] : '') + '",';
                 }
             } else {
-                // Getter - return all options
-                return o;
+                // Assume object; convert to stringified key:value pairs
+                values = Object.keys(o);
+                for (i = 0, len = values.length; i < len; i++) {
+                    result += '"' + values[i] + '":"' + o[values[i]] + '",';
+                }
             }
 
-            return this;
+            return '{' + result.slice(0, -1) + '}';
         },
-        _setter = function (key, value) {
-            return function () {
-                var setter = this._setOption;
 
-                // If no setter function or it returned false, set the value
-                if (!setter || (setter && setter({ key: key, value: value }))) {
-                    this._options[key] = value;
+        trim: _trim,
+
+        values: function (obj) {
+            var result = [], p;
+
+            for (p in obj) {
+                result.push(obj[p]);
+            }
+
+            return result;
+        },
+
+        wrap: function (func, wrapper) {
+            return function () {
+                var args = [func];
+                _protoPush.apply(args, arguments);
+                return wrapper.apply(this, args);
+            };
+        }
+    });
+} (mdsol));
+
+mdsol.ArrayBase = (function (mdsol, undefined) {
+    var ARRAY_RW_METHODS = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift'],
+        ARRAY_RO_METHODS = ['slice'];
+
+    // NOTE: There is something about this oject I don't like. It is technically
+    // a mixin, but given its required parameters cannot simply be added as such
+    // to another object. Consider renaming this something more appropriate.
+    // For now, as long as it works leave it alone.
+    
+    var _nativeArray = Array.prototype,
+        _arrayMethod = function (obj, method) {
+            return function () {
+                return _nativeArray[method].apply(obj, arguments);
+            };
+        };
+
+    function ArrayBase(t, a, rw, ro) {
+        if (!mdsol.isObject(t) || t === mdsol.global) {
+            // Verify we are passed a valid object as 't' and we are not being
+            // applied to global namespace
+            throw new Error('ArrayBase must be applied to a valid object.');
+        } else if (!mdsol.isArray(a)) {
+            // Verify array object is an actual array
+            throw new Error('Invalid array object.');
+        } else if ((rw && !mdsol.isFunction(rw) || (ro && !mdsol.isFunction(ro)))) {
+            // Verify callbacks are functions (if provided)
+            throw new Error('Invalid data type for predicate.');
+        }
+
+        return (function (that, obj, rwPredicate, roPredicate) {
+            var rwApply = (rwPredicate || _arrayMethod).call,
+                roApply = (roPredicate || rwApply).call;
+
+            // Borrow native Array methods
+            // Prevent clobber of existing methods if present
+            mdsol.each(ARRAY_RW_METHODS, function (method) {
+                if (that[method] === undefined) {
+                    that[method] = rwApply(that, obj, method);
+                }
+            }).each(ARRAY_RO_METHODS, function (method) {
+                if (that[method] === undefined) {
+                    that[method] = roApply(that, obj, method);
+                }
+            });
+
+            return this;
+        } (t, a, rw, ro));
+    };
+
+    return ArrayBase;
+} (mdsol));
+
+mdsol.SingletonBase = (function () {
+    // NOTE: There are a number of things about this object I don't like:
+    // 1) It is technically a wrapper, so the name is misleading.
+    // 2) The entire idea is a little superfluous. Singletons should be created
+    //    as a simple object literal - why present any additional overhead. 
+    // 3) Conflicts may occur if a constructor is wrapped with SingletonBase.
+    //    If after being wrapped as a singleton, the same constructor either
+    //    inherits from another object or applies a mixin, the wrapper is
+    //    discarded after the provided constructor is instantiated.
+    // For now, as long as it works leave it alone.
+    
+    function SingletonBase(c) {
+        if (!mdsol.isFunction(c)) {
+            // Verify we are passed a valid function as 'c'
+            throw new Error('SingletonBase must be applied to a valid constructor.');
+        }
+        
+        return (function(ctor) {
+            var _instance = null;
+
+            function Singleton() {
+                if (_instance) {
+                    return _instance;
+                }
+
+                _instance = new ctor();
+
+                return _instance;
+            }
+
+            Singleton.getInstance = function() {
+                return _instance || new Singleton();
+            };
+
+            return mdsol.Class.inherits(Singleton, ctor);
+        }(c));
+    }
+
+    return SingletonBase;
+} (mdsol));
+
+mdsol.OptionsBase = (function () {
+    function OptionsBase(obj, options) {
+        var _isInstance = !mdsol.isPlainObject(obj) && mdsol.isObject(obj),
+            _isConstructor = !_isInstance && mdsol.isFunction(obj),
+            _option = function (/* [key] | [key, value] | [object] */) {
+                var o = this._options,
+                    setter = this._setOption,
+                    key, value, p, ret;
+
+                if (arguments.length) {
+                    key = arguments[0];
+                    if (typeof key === 'string') {
+                        if (arguments.length > 1) {
+                            value = arguments[1];
+
+                            // If no setter function or it returned false, set the value
+                            if (setter) {
+                                ret = setter(key, value);
+                            }
+
+                            o[key] = (ret !== undefined) ? ret : value;
+                        } else {
+                            // Getter
+                            if (o[key] !== undefined) {
+                                return o[key];
+                            } else {
+                                throw new Error('Invalid option provided: "' + key + '"');
+                            }
+                        }
+                    } else if (mdsol.isObject(key)) {
+                        // Setter - argument is object of key/value pairs
+                        for (p in key) {
+                            if (key.hasOwnProperty(p)) {
+                                value = key[p];
+
+                                // If no setter function or it returned false, set the value
+                                if (setter) {
+                                    ret = setter(key, value);
+                                }
+
+                                o[key] = (ret !== undefined) ? ret : value;
+                            }
+                        }
+                    } else {
+                        // Invalid arguments
+                        throw new Error('Invalid arguments');
+                    }
+                } else {
+                    // Getter - return all options
+                    return o;
                 }
 
                 return this;
+            },
+            _setter = function (key, value) {
+                return function () {
+                    var setter = this._setOption,
+                        ret;
+
+                    // If no setter function or it returned false, set the value
+                    if (setter) {
+                        ret = setter(key, value);
+                    }
+
+                    this._options[key] = (ret !== undefined) ? ret : value;
+
+                    return this;
+                };
             };
-        },
-        _singleton = function (constructor) {
-            return (function (c) {
-                var _instance = null;
 
-                function Singleton() {
-                    if (_instance) {
-                        return _instance;
-                    }
+        function addToConstructor() {
+            var proto = obj.prototype;
+            
+            proto._options = options || {};
+            proto.option = _option;
 
-                    if (!(this instanceof Singleton)) {
-                        return new Singleton();
-                    }
+            if (proto._options.visible !== undefined) {
+                proto.show = _setter('visible', true);
+                proto.hide = _setter('visible', false);
+            }
 
-                    _instance = new c();
+            if (proto._options.enabled !== undefined) {
+                proto.enable = _setter('enabled', true);
+                proto.disable = _setter('enabled', false);
+            }
+        }
 
-                    return _extend(true, this, _instance);
+        function applyDefaultOptions() {
+            var opts, defs, c;
+
+            for (c = obj; c; ) {
+                if (c.hasOwnProperty('_options')) {
+                    break;
                 }
 
-                Singleton.getInstance = function () {
-                    return _instance || new Singleton();
-                };
+                c = Object.getPrototypeOf(c);
+            }
 
-                return _inherits(Singleton, c);
-            } (constructor));
+            if (c) {
+                opts = c._options || {},
+                defs = c.constructor.prototype._options || {};
+
+                obj._options = mdsol.merge(opts, defs, options);
+            }
+        }
+
+        if (_isConstructor) {
+            addToConstructor();
+        } else if (_isInstance) {
+            applyDefaultOptions();
+        }
+
+        return obj;
+    }
+
+    return OptionsBase;
+} (mdsol));
+
+mdsol.Class = (function (mdsol, undefined) {
+    var _makeArray = mdsol.makeArray,
+        _extend = mdsol.extend,
+        _inherits = function (child, base) {
+            child.parent = base.prototype;
+            child.prototype = _extend(Object.create(base.prototype), child.prototype);
+            child.prototype.constructor = child;
+
+            return child;
         };
 
     function Class(obj, proto) {
         var _class = obj,
-            _isInstance = !_object.isPlainObject(obj) && _core.isObject(_class),
-            _isConstructor = !_isInstance && _core.isFunction(_class),
+            _isInstance = !mdsol.isPlainObject(obj) && mdsol.isObject(_class),
+            _isConstructor = !_isInstance && mdsol.isFunction(_class),
             _public = {
-                singleton: function () {
-                    if (_isInstance) {
-                        throw new Error('Cannot convert an already instantiated object into a singleton constructor.');
-                    }
-
-                    _class = _singleton(_class);
-
-                    return _public;
-                },
-
                 mixin: function (/*sourceA [, sourceB[, ...]] */) {
-                    var a = _makeArray(arguments);
+                    var a = _makeArray(arguments),
+                        mixer;
 
-                    if (a.length === 1) {
-                        _mixin(_class, a[0]);
-                    } else {
-                        _mixin.apply(_public, [_class].concat(a));
+                    // See http://jsperf.com/mixin-fun/2
+                    while (a.length) {
+                        mixer = a.shift();
+                        if (!mixer || !(mdsol.isFunction(mixer) || mdsol.isObject(mixer))) {
+                            throw new Error('Invalid data type for mixin.');
+                        }
+
+                        mixer.call(_class.prototype);
                     }
 
                     return _public;
@@ -517,47 +683,43 @@ mdsol.Class = (function (mdsol, undefined) {
                         throw new Error('Invalid base constructor.');
                     }
 
-                    _class.parent = base.prototype;
-                    _class.prototype = _extend(Object.create(base.prototype), _class.prototype);
-                    _class.prototype.constructor = _class;
+                    _inherits(_class, base);
 
                     return _public;
                 },
 
-                staticMembers: function (members) {
+                extend: function (members) {
                     var target = _isConstructor ? _class : _class.constructor;
 
                     _extend(true, target, members);
 
                     return _public;
                 },
-
-                options: function (/* defaults[, visibility][, enabling] | options */) {
-                    var a = _core.makeArray(arguments),
-                        mix, o, d;
+                /*
+                options: function (options) {
+                    var c, opts, defs;
 
                     if (_isConstructor) {
-                        mix = { option: _option, _options: a[0] };
-                        if (a[1]) {
-                            mix.show = _setter('visible', true);
-                            mix.hide = _setter('visible', false);
-                        }
-
-                        if (a[2]) {
-                            mix.enable = _setter('enabled', true);
-                            mix.disable = _setter('enabled', false);
-                        }
-
-                        _mixin(_class.prototype, mix);
+                        mdsol.OptionsBase.call(_class.prototype, options || {});
                     } else if (_isInstance) {
-                        o = _class._options || {},
-                        d = _class.prototype._options || {};
+                        for (c = _class; c; ) {
+                            if (c.hasOwnProperty('_options')) {
+                                break;
+                            }
 
-                        _class._options = _object.merge(o, d, a[0]);
+                            c = Object.getPrototypeOf(c);
+                        }
+
+                        if (c) {
+                            opts = c._options || {},
+                            defs = c.constructor.prototype._options || {};
+
+                            _class._options = mdsol.merge(opts, defs, options);
+                        }
                     }
 
                     return _public;
-                },
+                },*/
 
                 base: function (method/* [, argA[, argB[, ...]]]*/) {
                     var caller = arguments.callee.caller,
@@ -607,7 +769,7 @@ mdsol.Class = (function (mdsol, undefined) {
 
         if (!_isInstance && !_isConstructor) {
             throw new Error('Class object must be a constructor or an instance.');
-        } else if (proto !== undefined && !_object.isPlainObject(proto)) {
+        } else if (proto !== undefined && !mdsol.isPlainObject(proto)) {
             throw new Error('Prototype must be an object literal.');
         }
 
@@ -617,6 +779,8 @@ mdsol.Class = (function (mdsol, undefined) {
 
         return _public;
     };
+
+    Class.inherits = _inherits;
 
     return Class;
 } (mdsol));
@@ -650,6 +814,7 @@ mdsol.BitFlags = (function (mdsol, undefined) {
         }
 
         /* @flag = name | value */
+
         function flagValue(flag) {
             var value;
 
@@ -673,6 +838,7 @@ mdsol.BitFlags = (function (mdsol, undefined) {
         }
 
         /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
+
         function test(any, flags) {
             var f, i, match = !any;
 
@@ -695,6 +861,7 @@ mdsol.BitFlags = (function (mdsol, undefined) {
         }
 
         /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
+
         function bitFlags(flags) {
             var i, value = 0;
 
@@ -706,10 +873,10 @@ mdsol.BitFlags = (function (mdsol, undefined) {
             return value;
         }
 
-        var _makeArray = mdsol.Core.makeArray,
-            _flags = mdsol.Object.clone(flagsObject),
+        var _makeArray = mdsol.makeArray,
+            _flags = mdsol.clone(flagsObject),
             _entropy = getMaxValue(_flags),
-            _value = initValue !== undefined ? bitFlags(mdsol.Core.toArray(initValue)) : 0,
+            _value = initValue !== undefined ? bitFlags(mdsol.toArray(initValue)) : 0,
             _public = {
                 value: function () {
                     if (arguments.length) {
@@ -753,7 +920,7 @@ mdsol.BitFlags = (function (mdsol, undefined) {
             };
 
         return mdsol.Class(this, _public).valueOf();
-    };
+    }
 
     return BitFlags;
 } (mdsol));
@@ -795,15 +962,15 @@ mdsol.Enum = (function (mdsol, undefined) {
                 // Verify it is a valid enum value
                 return v;
             }
-            
+
             throw new Error('Invalid enum value');
         }
 
         var _all = getValues(enumObj),
-            _enum = mdsol.Object.clone(enumObj),
+            _enum = mdsol.clone(enumObj),
             _value = initValue !== undefined ? enumValue(initValue) : null,
             _public = {
-                value: function (value) {
+                value: function(value) {
                     if (arguments.length) {
                         _value = enumValue(value);
                     }
@@ -811,11 +978,11 @@ mdsol.Enum = (function (mdsol, undefined) {
                     return _value;
                 },
 
-                test: function (value) {
+                test: function(value) {
                     return _value === enumValue(value);
                 },
 
-                toString: function () {
+                toString: function() {
                     var p;
 
                     for (p in _enum) {
@@ -829,19 +996,93 @@ mdsol.Enum = (function (mdsol, undefined) {
                     return null;
                 },
 
-                valueOf: function () {
+                valueOf: function() {
                     return _enum;
                 }
             };
 
         return mdsol.Class(this, _public).valueOf();
-    };
+    }
 
     return Enum;
 } (mdsol));
 
 mdsol.ObjectArray = (function (mdsol, undefined) {
+    var _prototype = {
+        contains: function (key, value) {
+            // Returns true if any objects in the collection match the key:value pair
+        },
 
+        excluded: function (key, varValues) {
+            // Returns all objects in the collection which do not match the key and any
+            // of the provided values
+        },
+
+        find: function (key, value) {
+            // Returns the first object in the collection which matches the key:value pair
+        },
+
+        filter: function (key, varValues) {
+            // Filters the collection to exclude all objects matching the key and 
+            // and any of the provided values
+        },
+
+        indexOf: function (key, value) {
+            // Returns the index in the collection of the first match for the key:value pair
+        },
+
+        lastIndexOf: function (key, value) {
+            // Returns the index in the collection of the last match for the key:value pair
+        },
+
+        matches: function (key, varValues) {
+            // Returns all objects in the collection which match the key and any of the 
+            // provided values
+        },
+
+        move: function (srcIndex, dstIndex) {
+            // Moves an item in the collection from one index to another
+        },
+
+        pluck: function (key, unique) {
+            // Returns an array of values for each item in the collection matching the key
+            // If unique is provided, only unique values will be returned.
+        },
+
+        size: function (key, value) {
+            if (!arguments.length) {
+                // Returns length of collection
+            } else {
+                // Returns number of objects in the collection matching the key:value pair
+            }
+        },
+
+        unique: function (varKeys) {
+            // Filters the collection to only contain objects which contain unique values
+            // for any of the provided values
+        },
+
+        value: function (value) {
+            if (!arguments.length) {
+                // Returns the collection
+            } else {
+                // Sets the collection
+            }
+        },
+
+        where: function (key, varValues) {
+            // Filters the collection to only include objects matching the key and 
+            // any of the provided values
+        }
+    };
+
+    function ObjectArray() {
+        var _array = [];
+        
+        return mdsol.ArrayBase.call(this, _array);
+    }
+
+    return mdsol.Class(ObjectArray, _prototype).valueOf();
 } (mdsol));
 
 mdsol.ObjectMap = (function (mdsol, undefined) {
@@ -856,7 +1097,7 @@ mdsol.UserSession = (function (mdsol, undefined) {
     //"use strict";
 
     var _class = mdsol.Class;
-    
+
     function UserSession() {
         if (!(this instanceof UserSession)) {
             return new UserSession();
@@ -871,7 +1112,7 @@ mdsol.UserSession = (function (mdsol, undefined) {
         return _class(this, _public).valueOf();
     };
 
-    return _class(UserSession).singleton().valueOf();
+    return mdsol.SingletonBase(UserSession);
 } (mdsol));
 
 mdsol.ajax.Handler = (function (mdsol, undefined) {
@@ -892,8 +1133,7 @@ mdsol.ajax.Handler = (function (mdsol, undefined) {
             return new Handler();
         }
 
-        var _core = mdsol.Core,
-            _requests = {},
+        var _requests = {},
             _uuid = 0,
             _public = {
                 post: function (uri, contentType, data, callback, userData) {
@@ -920,7 +1160,7 @@ mdsol.ajax.Handler = (function (mdsol, undefined) {
                 _requests[uuid] = params;
             }
 
-            if (Object.keys(_requests).length) {
+            if (!mdsol.isEmpty(_requests)) {
                 // TODO: Update/show 'waiting' display
             } else {
                 // TODO: Hide 'waiting' display
@@ -953,7 +1193,7 @@ mdsol.ajax.Handler = (function (mdsol, undefined) {
 
             updateRequests(this.uuid);
 
-            if (_core.isFunction(callback)) {
+            if (mdsol.isFunction(callback)) {
                 callback(true, data, this.userData, this);
             }
         }
@@ -963,7 +1203,7 @@ mdsol.ajax.Handler = (function (mdsol, undefined) {
 
             updateRequests(this.uuid);
 
-            if (_core.isFunction(callback)) {
+            if (mdsol.isFunction(callback)) {
                 callback(false, xhr, this.userData, this);
             }
         }
@@ -971,16 +1211,13 @@ mdsol.ajax.Handler = (function (mdsol, undefined) {
         return _class(this, _public).valueOf();
     };
 
-    return _class(Handler)
-        .staticMembers(_static)
-        .singleton()
-        .valueOf();
+    return mdsol.SingletonBase(_class(Handler).extend(_static).valueOf());
 } (mdsol));
 
 mdsol.ajax.Method = (function (mdsol, undefined) {
     var BASE_URL = 'http://dlcdkpcs1.ad.mdsol.com/api/Services/';
-    var _core = mdsol.Core,
-        _object = mdsol.Object,
+
+    var _handler = null,
         _class = mdsol.Class,
         _statusFlags = {
             NONE: 0,                // The method has not yet executed
@@ -993,7 +1230,7 @@ mdsol.ajax.Method = (function (mdsol, undefined) {
             service: null,
             method: null,
             params: null,
-            callback: _core.noop,
+            callback: mdsol.noop,
             userData: null
         },
         _prototype = {
@@ -1009,37 +1246,24 @@ mdsol.ajax.Method = (function (mdsol, undefined) {
         }
 
         var _self = this,
-            _handler = mdsol.ajax.Handler.getInstance(),
             _public = {
-                _status: mdsol.BitFlags(_statusFlags, 'NONE'),
-
-                _setOption: function (option) {
-                    var value;
-                    
-                    if (option.key === 'status') {
-                        value = option.value;
-                        if (mdsol.Core.isArray(value)) {
-                            _self._status.value.apply(this, value);
-                        } else {
-                            _self._status.value(value);
-                        }
-                        
-                        return false;
-                    }
-                    
-                    return true;
-                },
+                status: mdsol.BitFlags(_statusFlags, 'NONE'),
 
                 execute: function (/*[callback, ][apiParamVal1][, apiParamVal2][, ...] */) {
-                    var a = _core.makeArray(arguments),
+                    var handler = _handler || mdsol.ajax.Handler.getInstance(),
+                        a = mdsol.makeArray(arguments),
                         o = this.option(),
-                        userData = _object.clone(o),
+                        userData = mdsol.clone(o),
                         params = o.params || [],
                         uri,
                         paramObj = {},
                         i, len, data;
 
-                    if (a.length && _core.isFunction(a[0])) {
+                    // TODO: Refactor
+                    // Move this to the prototype. In order to do that, we need to wrap the
+                    // reference to onCompleted and capture the current value of 'this'.
+
+                    if (a.length && mdsol.isFunction(a[0])) {
                         userData.callback = a.shift();
                     }
 
@@ -1048,9 +1272,9 @@ mdsol.ajax.Method = (function (mdsol, undefined) {
                     }
 
                     uri = BASE_URL + o.service + '.asmx/' + o.method;
-                    data = _core.toJson(paramObj);
+                    data = mdsol.toJson(paramObj);
 
-                    _handler.post(uri, 'JSON', data, onCompleted, userData);
+                    handler.post(uri, 'JSON', data, onCompleted, userData);
 
                     return this;
                 },
@@ -1077,7 +1301,7 @@ mdsol.ajax.Method = (function (mdsol, undefined) {
                 error = parseServerError(xhr, data);
             } else {
                 try {
-                    data = mdsol.String.parseJson(data.d);
+                    data = mdsol.parseJson(data.d);
                 } catch (err) {
                     data = null;
                     success = false;
@@ -1086,7 +1310,7 @@ mdsol.ajax.Method = (function (mdsol, undefined) {
 
                 if (!success) {
                     msgboxOptions.autoSize = false;
-                } else if (data && _core.isArray(data) && data.length && data[0].error_time) {
+                } else if (data && mdsol.isArray(data) && data.length && data[0].error_time) {
                     error = parseServiceError(xhr, data);
                 } else {
                     e = $.Event(this.eventName, { xhrMethod: _self, params: params });
@@ -1176,25 +1400,26 @@ mdsol.ajax.Method = (function (mdsol, undefined) {
                 errorLine('URL:', xhr.url) + '<br />' +
                 errorLine('Message:', error) + '<br /></div>';
         }
-        
-        return _class(this, _public).options(options).valueOf();
+
+        mdsol.OptionsBase(this, options);
+    
+        return _class(this, _public).valueOf();
     }
 
     Method.statusFlags = _statusFlags;
 
-    return _class(Method, _prototype)
-        .options(_defaultOptions)
-        .valueOf();
+    mdsol.OptionsBase(Method, _defaultOptions);
+    
+    return _class(Method, _prototype).valueOf();
 } (mdsol));
 
 mdsol.ajax.RequestMethod = (function (mdsol, undefined) {
     var DEFAULT_PARAMS = ['audit_info', 'field_filter'];
 
-    var _core = mdsol.Core,
-        _class = mdsol.Class,
-        _merge = mdsol.Object.merge,
+    var _class = mdsol.Class,
+        _protoPush = Array.prototype.push,
         _ajaxMethod = mdsol.ajax.Method,
-        _defaultOptions = _merge(_ajaxMethod.defaultOptions, { fields: [], audit: false });
+        _defaultOptions = mdsol.merge(_ajaxMethod.defaultOptions, { fields: [], audit: false });
 
     function RequestMethod(options) {
         if (!(this instanceof RequestMethod)) {
@@ -1202,77 +1427,80 @@ mdsol.ajax.RequestMethod = (function (mdsol, undefined) {
         }
 
         function createOptions(defaultOptions, o) {
-            var params = o ? _core.toArray(o.params) : [];
+            var params = o ? mdsol.toArray(o.params) : [],
+                results = mdsol.merge(_defaultOptions, o || {}, { params: params });
 
-            return _merge(_defaultOptions, o || {}, {
-                params: params.concat(DEFAULT_PARAMS)
-            });
+            _protoPush.apply(results.params, DEFAULT_PARAMS);
+
+            return results;
         }
 
         function createArguments(that, method, args) {
             var audit = that.option('audit'),
                 fields = that.options('fields'),
-                a = [audit ? 'y' : 'n', fields.join(',')];
+                newArgs = [that, 'execute'];
 
-            return [that, 'execute'].concat(args, a);
+            // Major performance boost (see http://jsperf.com/arrayconcatvsarraypushapply)
+            _protoPush.apply(newArgs, args);
+            _protoPush.apply(newArgs, [audit ? 'y' : 'n', fields.join(',')]);
+
+            return newArgs;
         }
 
         var _public = {
-                _setOption: function (option) {
-                    var key = option.key;
-                    
-                    if (key === 'fields') {
-                        option.value = _core.toArray(option.value);
-                    }
-
-                    return true;
-                },
-
-                execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
-                    var a = createArguments(this, 'execute', _core.makeArray(arguments));
-
-                    return _class.base.apply(this, a);
-                },
-
-                dispose: function () {
-                    // Perform any cleanup
+            _setOption: function (key, value) {
+                if (key === 'fields') {
+                    return mdsol.toArray(value);
                 }
-            };
-        
+
+                return undefined;
+            },
+
+            execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
+                var a = createArguments(this, 'execute', mdsol.makeArray(arguments));
+
+                return _class.base.apply(this, a);
+            },
+
+            dispose: function () {
+                // Perform any cleanup
+            }
+        };
+
         return _class(this, _public)
             .base(createOptions(_defaultOptions, options))
             .valueOf();
     };
-    
+
     return _class(RequestMethod).inherits(_ajaxMethod).valueOf();
 } (mdsol));
 
 mdsol.ajax.UpsertMethod = (function (mdsol, undefined) {
     var DEFAULT_PARAMS = ['session_id', 'field_data'];
 
-    var _core = mdsol.Core,
-        _class = mdsol.Class,
-        _object = mdsol.Object;
+    var _class = mdsol.Class,
+        _protoPush = Array.prototype.push;
 
     function UpsertMethod(options) {
         if (!(this instanceof UpsertMethod)) {
             return new UpsertMethod(options);
         }
 
-        var _options = _object.clone(options),
+        var _options = mdsol.clone(options),
             _public = {
                 execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
                     var token = ctms.userSession.dbUser.session_id,
-                        args = _core.makeArray(arguments),
-                        fieldData = '', a;
-                    
-                    if (args.length && !_core.isFunction(args[0])) {
-                        fieldData = args[0];
+                        fieldData = '', newArgs = [this, 'execute'];
+
+                    if (arguments.length && !mdsol.isFunction(arguments[0])) {
+                        fieldData = arguments[0];
+                        _protoPush.apply(newArgs, arguments);
                     }
-                    
-                    a = [token, fieldData];
-                    
-                    return _class.base.apply(this, [this, 'execute'].concat(args, a));
+
+                    // Major performance boost (see http://jsperf.com/arrayconcatvsarraypushapply)
+                    _protoPush.apply(newArgs, [token, fieldData]);
+
+                    return _class.base.apply(this, newArgs);
                 },
 
                 dispose: function () {
@@ -1281,10 +1509,11 @@ mdsol.ajax.UpsertMethod = (function (mdsol, undefined) {
             };
 
         // Force option 'params' to an array and add the default request parameters
-        _options.params = _core.toArray(_object.params).concat(DEFAULT_PARAMS);
-        
+        _options.params = mdsol.toArray(_options.params);
+        _protoPush.apply(_options.params, DEFAULT_PARAMS);
+
         return _class(this, _public)
-            .options(_options)
+            .base(_options)
             .valueOf();
     };
 
@@ -1296,45 +1525,33 @@ mdsol.ajax.UpsertMethod = (function (mdsol, undefined) {
 mdsol.ui.NavigationBar = (function (mdsol, undefined) {
     //"use strict";
 
-    var _class = mdsol.Class;
-        
     function NavigationBar() {
-        if (!(this instanceof NavigationBar)) {
-            return new NavigationBar();
-        }
-
         var _public = {
             dispose: function () {
                 // Perform any cleanup
             }
         };
 
-        return _class(this, _public).valueOf();
+        return mdsol.Class(this, _public).valueOf();
     };
 
-    return _class(NavigationBar)
-            .singleton()
-            .valueOf();
+    return mdsol.SingletonBase(NavigationBar);
 } (mdsol));
 
 mdsol.ui.SchemaCanvas = (function (mdsol, undefined) {
     //"use strict";
 
     function SchemaCanvas() {
-        if (!(this instanceof SchemaCanvas)) {
-            return new SchemaCanvas();
-        }
-
         var _public = {
             dispose: function () {
                 // Perform any cleanup
             }
         };
 
-        return mdsol.Object.extend(this, _public);
+        return mdsol.Class(this, _public).valueOf();
     };
 
-    return mdsol.Class(SchemaCanvas).singleton().valueOf();
+    return mdsol.SingletonBase(SchemaCanvas);
 } (mdsol));
 
 mdsol.ui.Dropdown = (function (mdsol, undefined) {
@@ -1350,7 +1567,7 @@ mdsol.ui.DropdownMenu = (function (mdsol, undefined) {
 } (mdsol));
 
 mdsol.ui.DialogContainer = (function (mdsol, undefined) {
-    var _methods = {
+var _methods = {
         options: function () {
 
         },
@@ -1389,8 +1606,7 @@ mdsol.ui.Dialog = (function (mdsol, undefined) {
 } (mdsol));
 
 mdsol.ui.DialogPage = (function (mdsol, undefined) {
-
-    var _callbacks = {
+var _callbacks = {
         onLoading: null,
         onInitialized: null,
         onDisplaying: null,
@@ -1400,65 +1616,64 @@ mdsol.ui.DialogPage = (function (mdsol, undefined) {
         onRefreshing: null,
         onMenuSelect: null
     },
-        _methods = {
-            options: function () {
+    _methods = {
+        options: function () {
 
-            },
-            show: function () {
+        },
+        show: function () {
 
-            },
-            hide: function () {
+        },
+        hide: function () {
 
-            },
-            enable: function () {
+        },
+        enable: function () {
 
-            },
-            disable: function () {
+        },
+        disable: function () {
 
-            },
-            refresh: function () {
+        },
+        refresh: function () {
 
-            },
-            dispose: function () {
+        },
+        dispose: function () {
 
-            },
-            callbacks: function () {
+        },
+        callbacks: function () {
 
-            },
-            addButton: function () {
+        },
+        addButton: function () {
 
-            },
-            getButton: function () {
+        },
+        getButton: function () {
 
-            },
-            removeButton: function () {
+        },
+        removeButton: function () {
 
-            },
-            selectedSubpage: function () {
+        },
+        selectedSubpage: function () {
 
-            },
-            load: function () {
+        },
+        load: function () {
 
-            },
-            save: function () {
+        },
+        save: function () {
 
-            },
-            close: function () {
+        },
+        close: function () {
 
-            }
-        };
+        }
+    };
 } (mdsol));
 
 mdsol.ui.DialogSubpage = (function (mdsol, undefined) {
-
     var _callbacks = {
-        onInitialized: null,
-        onDisplaying: null,
-        onHiding: null,
-        onSaving: null,
-        onClosing: null,
-        onRefreshing: null
-    };
+            onInitialized: null,
+            onDisplaying: null,
+            onHiding: null,
+            onSaving: null,
+            onClosing: null,
+            onRefreshing: null
+        };
 } (mdsol));
 
 mdsol.ui.DialogBox = (function (mdsol, undefined) {
