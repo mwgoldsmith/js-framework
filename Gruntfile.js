@@ -1,16 +1,19 @@
 module.exports = function(grunt) {
-  grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'), // the package file to use
- 
-	qunit: {
-	  all: ['tests/*.html']
-	},
-	watch: {
-		files: ['tests/*.js', 'tests/*.html', 'src/*.js'],
-		tasks: ['qunit']
-	  }
-  });
-  grunt.loadNpmTasks('grunt-contrib-watch');
-  grunt.loadNpmTasks('grunt-contrib-qunit');
-  grunt.registerTask('default', ['qunit']);
+    grunt.initConfig({
+        pkg: grunt.file.readJSON('package.json'),
+
+        build: {
+            all: {
+                dest: 'dist/mdsol.js'
+            }
+        },  
+    });
+
+	grunt.loadTasks('build/tasks');
+
+	// Short list as a high frequency watch task
+    grunt.registerTask('dev', ['build:*:*']);
+
+	// Default grunt
+    grunt.registerTask('default', ['dev']);
 };
