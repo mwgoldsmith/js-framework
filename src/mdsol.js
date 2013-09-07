@@ -1,6 +1,9 @@
 ﻿define([
-        './core'//,
-        //'./ajax',
+        './core',
+        './base64',
+        './cookies',
+        './json',
+        './strings'//,
         //'./ajax/handler',
         //'./ajax/method',
         //'./ajax/requestmethod',
@@ -10,5 +13,4 @@
 
     // Expose mdsol, even in AMD and CommonJS for browser emulators
     return (window.mdsol = mdsol);
-
 });

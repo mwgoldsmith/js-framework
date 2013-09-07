@@ -31,3 +31,11 @@
 
     // Pass this, window may not be defined yet
 }(this, function(window) {
+    var CLASS_STRING = '[object String]',
+        CLASS_NUMBER = '[object Number]',
+        CLASS_DATE = '[object Date]',
+        CLASS_BOOLEAN = '[object Boolean]',
+        CLASS_REGEXP = '[object RegExp]',
+        CLASS_ARRAY = '[object Array]',
+        CLASS_OBJECT = '[object Object]',
+        CLASS_FUNCTION = '[object Function]';
