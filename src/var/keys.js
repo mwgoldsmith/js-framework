@@ -41,5 +41,5 @@
 
                 return result;
             };
-    }(natives[CLASS_OBJECT].keys));
+    }(natives['[object Object]'].keys));
 });

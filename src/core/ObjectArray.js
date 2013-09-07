@@ -1,6 +1,6 @@
 ﻿define([
     '../core',
-    '../Class',
+    './Class',
     '../var/isArray',
     '../var/push',
     '../var/slice'

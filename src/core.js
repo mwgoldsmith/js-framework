@@ -131,6 +131,41 @@
         return tgt;
     };
 
+    function proxy(obj, target, callback, methods) {
+        var nativeProto = natives[toString.call(target)],
+            overrides = [],
+            p;
+
+        for (p in nativeProto) {
+            if (nativeProto.hasOwnProperty(p)
+                && isFunction(nativeProto[p])
+                && (!methods.length || methods.indexOf(p) !== -1)) {
+                overrides.push(p);
+            }
+        }
+
+        return (function (that, tgt, c) {
+            /*
+            * Create native methods on `that` which will call `callback` if provided;
+            * otherwise, the call will be applied directly to `target`. Prevent
+            * clobber of existing methods if present.
+            */
+            mdsol.each(overrides, function (override) {
+                if (that[override] === undefined) {
+                    var nativeMethod = nativeProto[override];
+
+                    that[override] = (c || function (/* tgt, override, nativeMethod */) {
+                        return function () {
+                            return nativeMethod.apply(tgt, arguments);
+                        };
+                    }).call(that, tgt, override, nativeMethod);
+                }
+            });
+
+            return that;
+        } (obj, target, callback));
+    }
+
     // Extend our base object with our public methods
     return extend(mdsol, {
         clone: clone,
@@ -279,6 +314,8 @@
             return function () { };
         },
 
+        prxoy: proxy,
+        
         toArray: toArray,
 
         values: function (obj) {

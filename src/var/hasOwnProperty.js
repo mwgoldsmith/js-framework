@@ -1,5 +1,5 @@
 ﻿define([
     './natives'
 ], function(natives) {
-    return natives[CLASS_OBJECT].hasOwnProperty;
+    return natives['[object Object]'].hasOwnProperty;
 });

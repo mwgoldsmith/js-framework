@@ -5,7 +5,7 @@
         return typeof isArray === 'function'
             ? isArray
             : function(obj) {
-                return toString.call(obj) === CLASS_ARRAY;
+                return toString.call(obj) === '[object Array]';
             };
     } ([].constructor.isArray));
 });

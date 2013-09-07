@@ -44,7 +44,7 @@
         },
 
         base64Decode: function (input) {
-            var fromCharCode = natives[CLASS_STRING].fromCharCode,
+            var fromCharCode = ''.fromCharCode,
                 output = '',
                 chr1, chr2, chr3,
                 enc1, enc2, enc3,

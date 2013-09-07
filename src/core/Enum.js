@@ -1,6 +1,6 @@
 ﻿define([
     '../core',
-    '../Class'
+    './Class'
 ], function(mdsol) {
     mdsol.Enum = (function(undefined) {
         "use strict";

@@ -2,7 +2,7 @@ module.exports = function (grunt) {
     'use strict';
 
     var rdefineEnd = /\}\);[^}\w]*$/,
-        // This is temporary until the skipSemiColonInsertion option makes it to NPM
+    // This is temporary until the skipSemiColonInsertion option makes it to NPM
         requirejs = require('../r'),
         config = {
             baseUrl: 'src',
@@ -33,8 +33,8 @@ module.exports = function (grunt) {
             if (name !== 'mdsol') {
                 contents = contents
                     .replace(/\s*return\s+[^\}]+(\}\);[^\w\}]*)$/, '$1');
-            }
-
+            } 
+            
             // Remove define wrappers, closure ends, and empty declarations
             contents = contents
                 .replace(/define\([^{]*?{/, '')
@@ -68,6 +68,7 @@ module.exports = function (grunt) {
             //  *                  none (implicit exclude)
             //  *:*                all (implicit include)
             for (flag in flags) {
+                grunt.log.writeln(flag);
                 if (flag !== '*') {
                     var m = /^(\+|\-|)([\w\/-]+)$/.exec(flag);
                     grunt.log.writeln(flag);
