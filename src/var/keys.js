@@ -41,5 +41,5 @@
 
                 return result;
             };
-    }(natives['[object Object]'].keys));
+    }(natives['[object Object]'].constructor.keys));
 });

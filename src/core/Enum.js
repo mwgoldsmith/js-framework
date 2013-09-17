@@ -3,7 +3,7 @@
     './Class'
 ], function(mdsol) {
     mdsol.Enum = (function(undefined) {
-        "use strict";
+        'use strict';
 
         function Enum(enumObj, initValue) {
             if (!(this instanceof Enum)) {
@@ -44,7 +44,7 @@
             }
 
             var _all = getValues(enumObj),
-                _enum = mdsol.clone(enumObj),
+                _enum = clone(enumObj),
                 _value = initValue !== undefined ? enumValue(initValue) : null,
                 _public = {
                     value: function(value) {

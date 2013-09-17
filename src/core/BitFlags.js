@@ -1,7 +1,8 @@
 ﻿define([
     '../core',
+    '../var/slice',
     './Class'
-], function(mdsol) {
+], function(mdsol, slice) {
     mdsol.BitFlags = (function(undefined) {
         "use strict";
 
@@ -87,29 +88,28 @@
                 return value;
             }
 
-            var _makeArray = mdsol.makeArray,
-                _flags = mdsol.clone(flagsObject),
+            var _flags = clone(flagsObject),
                 _entropy = getMaxValue(_flags),
-                _value = initValue !== undefined ? bitFlags(mdsol.toArray(initValue)) : 0,
+                _value = initValue !== undefined ? bitFlags(toArray(initValue)) : 0,
                 _public = {
                     value: function() {
                         if (arguments.length) {
-                            _value = bitFlags(_makeArray(arguments));
+                            _value = bitFlags(slice.call(arguments));
                         }
 
                         return _value;
                     },
 
                     equals: function() {
-                        return _value === bitFlags(_makeArray(arguments));
+                        return _value === bitFlags(slice.call(arguments));
                     },
 
                     test: function() {
-                        return test(false, _makeArray(arguments));
+                        return test(false, slice.call(arguments));
                     },
 
                     testAny: function() {
-                        return test(true, _makeArray(arguments));
+                        return test(true, slice.call(arguments));
                     },
 
                     toString: function() {

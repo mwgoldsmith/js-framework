@@ -8,7 +8,8 @@
     mdsol.ObjectArray = (function (undefined) {
         'use strict';
 
-        var _softIndexOf = function(arr, value) {
+        var ARRAY_METHODS = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift', 'slice'],
+            _softIndexOf = function(arr, value) {
                 var i, len;
             
                 // Return the index of the first match for `value` within the
@@ -121,9 +122,11 @@
 
                     return _filterItems.apply(this, args);
                 },
-
+                
+                /*
+                * Returns the first object in the collection which matches the key:value pair
+                */
                 get: function (key, value) {
-                    // Returns the first object in the collection which matches the key:value pair
                     var baseArray = this._array,
                         i, item, v;
 
@@ -138,10 +141,12 @@
 
                     return null;
                 },
-
-                getAll: function (/*key, varValues*/) {
-                    // Returns all objects in the collection which match the key and any of the 
-                    // provided values
+                
+                /*
+                * Returns all objects in the collection which match the key and any of the 
+                * provided values
+                */
+                getAll: function (/* key, varValues */) {
                     var args = [true];
 
                     push.apply(args, arguments);
@@ -149,9 +154,11 @@
                     return _getAll.apply(this, args);
                 },
             
-                getNot: function (/*key, varValues*/) {
-                    // Returns all objects in the collection which do not match the key and any
-                    // of the provided values
+                /*
+                * Returns all objects in the collection which do not match the key and any
+                * of the provided values
+                */
+                getNot: function (/* key, varValues */) {
                     var args = [false];
 
                     push.apply(args, arguments);
@@ -163,8 +170,10 @@
                     return _getUnique.apply(this, arguments);
                 },
             
+                /*
+                * Returns the index in the collection of the first match for the key:value pair
+                */
                 indexOf: function (key, value) {
-                    // Returns the index in the collection of the first match for the key:value pair
                     var baseArray = this._array,
                         i, len, item, v;
 
@@ -180,12 +189,17 @@
                     return -1;
                 },
 
+                /*
+                * Returns the index in the collection of the last match for the key:value pair
+                */
                 lastIndexOf: function (key, value) {
-                    // Returns the index in the collection of the last match for the key:value pair
+                    // TODO: Implement
                 },
-
+                
+                /*
+                * Moves an item in the collection from one index to another
+                */
                 move: function (srcIndex, dstIndex) {
-                    // Moves an item in the collection from one index to another
                     var baseArray = this._array,
                         len = baseArray.length,
                         k;
@@ -202,9 +216,11 @@
                     return this;
                 },
 
+                /*
+                * Returns an array of values for each item in the collection matching the key
+                * If unique is provided, only unique values will be returned.
+                */
                 pluck: function (key, unique) {
-                    // Returns an array of values for each item in the collection matching the key
-                    // If unique is provided, only unique values will be returned.
                     var values = [],
                         baseArray = this._array,
                         i, v;
@@ -238,10 +254,12 @@
                         return len;
                     }
                 },
-
+                
+                /*
+                * Filters the collection to only contain objects which contain unique values
+                * for any of the provided values
+                */
                 unique: function (/* varKeys */) {
-                    // Filters the collection to only contain objects which contain unique values
-                    // for any of the provided values
                     this._array = _getUnique.apply(this, arguments);
 
                     return this;
@@ -259,9 +277,11 @@
                     return this;
                 },
 
-                where: function (/*key, varValues*/) {
-                    // Filters the collection to only include objects matching the key and 
-                    // any of the provided values
+                /*
+                * Filters the collection to only include objects matching the key and 
+                * any of the provided values
+                */
+                where: function (/* key, varValues */) {
                     var args = [true];
 
                     push.apply(args, arguments);
@@ -275,18 +295,20 @@
                 return new ObjectArray(value);
             }
 
-            if (value && !mdsol.isArray(value)) {
+            if (value && !isArray(value)) {
                 throw new TypeError('Invalid data type for ObjectArray initialization value.');
             }
         
             // TODO: Consider implementing more robust type-checking
             // We're making a pretty big assumption at this point that every element in
-            // 'value' (if provided) is an object. Consider an optional flag which can
-            // enable or disable this action.
+            // `value` (if provided) is an object. On the other hand, to force type
+            // checking every time an ObjectArray is created could produce significant 
+            // wasteful overhead. Consider having type checking enabled by default and
+            // having an optional flag which can disable this.
         
             this._array = value || [];
         
-            return mdsol.ArrayBase(this, this._array);
+            return proxy(this, this._array, null, ARRAY_METHODS);
         }
 
         return mdsol.Class(ObjectArray, _prototype).valueOf();

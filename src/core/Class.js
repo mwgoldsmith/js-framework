@@ -12,8 +12,8 @@
 
         function Class(obj, proto) {
             var _class = obj,
-                _isInstance = !mdsol.isPlainObject(obj) && mdsol.isObject(_class),
-                _isConstructor = !_isInstance && mdsol.isFunction(_class),
+                _isInstance = !isPlainObject(obj) && isObject(_class),
+                _isConstructor = !_isInstance && isFunction(_class),
                 _public = {
                     mixin: function (/*sourceA [, sourceB[, ...]] */) {
                         var a = mdsol.makeArray(arguments),

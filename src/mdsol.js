@@ -4,14 +4,13 @@
         './cookies',
         './json',
         './strings',
+        './ajax',
         './core/BitFlags',
         './core/Enum',
-        './core/ObjectArray'//,
-        //'./ajax/handler',
-        //'./ajax/method',
-        //'./ajax/requestmethod',
-        //'./ajax/upsertmethod',
-       // './exports/amd'
+        './core/Class',
+        './core/ObjectArray',
+        './ajax/RequestMethod',
+        './ajax/UpsertMethod'
     ], function(mdsol) {
 
     // Expose mdsol, even in AMD and CommonJS for browser emulators
