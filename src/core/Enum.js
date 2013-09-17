@@ -1,8 +1,9 @@
-﻿define([
+﻿/*global clone*/
+define([
     '../core',
     './Class'
-], function(mdsol) {
-    mdsol.Enum = (function(undefined) {
+], function (mdsol) {
+    mdsol.Enum = (function () {
         'use strict';
 
         function Enum(enumObj, initValue) {
@@ -47,7 +48,7 @@
                 _enum = clone(enumObj),
                 _value = initValue !== undefined ? enumValue(initValue) : null,
                 _public = {
-                    value: function(value) {
+                    value: function (value) {
                         if (arguments.length) {
                             _value = enumValue(value);
                         }
@@ -55,11 +56,11 @@
                         return _value;
                     },
 
-                    test: function(value) {
+                    test: function (value) {
                         return _value === enumValue(value);
                     },
 
-                    toString: function() {
+                    toString: function () {
                         var p;
 
                         for (p in _enum) {
@@ -73,7 +74,7 @@
                         return null;
                     },
 
-                    valueOf: function() {
+                    valueOf: function () {
                         return _enum;
                     }
                 };

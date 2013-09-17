@@ -1,7 +1,7 @@
 ﻿define([
     '../core'
 ], function (mdsol) {
-    mdsol.ui.MessageBox = (function (undefined) {
+    mdsol.ui.MessageBox = (function () {
         'use strict';
 
         function MessageBox() {

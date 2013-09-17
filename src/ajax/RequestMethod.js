@@ -1,10 +1,11 @@
-﻿define([
+﻿/*global merge,toArray,makeArray*/
+define([
     '../core',
     '../var/push',
     './Method',
     '../core/Class'
 ], function (mdsol, push) {
-    mdsol.ajax.RequestMethod = (function (undefined) {
+    mdsol.ajax.RequestMethod = (function () {
         var DEFAULT_PARAMS = ['audit_info', 'field_filter'],
             _defaultOptions = merge(mdsol.ajax.Method.defaultOptions, { fields: [], audit: false });
 
@@ -57,7 +58,7 @@
             return mdsol.Class(this, _public)
                 .base(createOptions(_defaultOptions, options))
                 .valueOf();
-        };
+        }
 
         return mdsol.Class(RequestMethod).inherits(mdsol.ajax.Method).valueOf();
     } ());

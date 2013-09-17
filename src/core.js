@@ -1,16 +1,16 @@
-﻿define([
+﻿/*global DONT_ENUM_BUG*/
+define([
     './var/global',
-    './var/hasOwnProperty',
-    './var/isArray',
-    './var/keys',
     './var/natives',
+    './var/hasOwnProperty',
     './var/push',
     './var/slice',
-    './var/toString'
-], function (global, hasOwnProperty, isArray, keys, natives, push, slice, toString) {
-    var mdsol = {},
-        IS_DONTENUM_BUGGY = !({ toString: null }).propertyIsEnumerable('toString');
-
+    './var/toString',
+    './var/isArray',
+    './var/keys'
+], function (global, natives, hasOwnProperty, push, slice, toString, isArray, keys) {
+    var mdsol = {};
+   
     function namespace(identifier, objects) {
         var ns = global, parts, i, item;
 
@@ -36,24 +36,40 @@
         }
 
         return ns;
-    };
+    }
 
+    /*
+    * Checks if the provided object is a string.
+    */
     function isString(obj) {
         return typeof obj === 'string';
     }
 
+    /*
+    * Checks if the provided object is a number.
+    */
     function isNumber(obj) {
         return typeof obj === 'number';
     }
 
+    /*
+    * Checks if the provided object is an object.
+    */
     function isObject(obj) {
         return toString.call(obj) === '[object Object]';
     }
 
+    /*
+    * Checks if the provided object is a function.
+    */
     function isFunction(obj) {
         return toString.call(obj) === '[object Function]';
     }
 
+    /*
+    * Checks if the provided object is an object literal (plain object), or if
+    * it was created via a constructor.
+    */
     function isPlainObject(obj) {
         var key;
 
@@ -69,8 +85,8 @@
         try {
             // Not own constructor property must be Object
             if (obj.constructor &&
-                !hasOwnProperty.call(obj, 'constructor') &&
-                !hasOwnProperty.call(obj.constructor.prototype, 'isPrototypeOf')) {
+                    !hasOwnProperty.call(obj, 'constructor') &&
+                    !hasOwnProperty.call(obj.constructor.prototype, 'isPrototypeOf')) {
                 return false;
             }
         } catch (e) {
@@ -80,12 +96,14 @@
 
         // Own properties are enumerated firstly, so to speed up,
         // if last one is own, then all properties are own.
-        for (key in obj) {
-        }
+        for (key in obj) { }
 
         return key === undefined || hasOwnProperty.call(obj, key);
     }
 
+    /*
+    * Checks if the provided object is a date.
+    */
     function isDate(o) {
         return toString.call(o) === '[object Date]';
     }
@@ -95,9 +113,11 @@
 
         if (o === null || o === undefined) {
             return true;
-        } else if (typeof o === 'string' || isArray(o)) {
+        }
+        if (typeof o === 'string' || isArray(o)) {
             return !!o.length;
-        } else if (!isObject(o)) {
+        }
+        if (!isObject(o)) {
             throw new TypeError('Invalid data type.');
         }
 
@@ -119,7 +139,8 @@
     function toArray(value) {
         if (value === null || value === undefined) {
             return [];
-        } else if (isArray(value)) {
+        }
+        if (isArray(value)) {
             return value;
         }
 
@@ -133,10 +154,11 @@
 
     function safeCopyProperty(tgt, org, methods) {
         var nativeProto = natives[toString.call(tgt)],
-            m, i;
+            m,
+            i;
 
         // Copy the property if it is not a native prototype method
-        for (i = methods.length; i--; ) {
+        for (i = methods.length; i--;) {
             m = methods[i];
             if (org[m] !== nativeProto[m]) {
                 tgt[m] = org[m];
@@ -165,36 +187,36 @@
         return true;
     }
 
-    function clone(o) {
+    function clone(obj) {
         var result, p;
 
-        if (isArray(o)) {
+        if (isArray(obj)) {
             result = [];
-            for (p in o) {
-                result[p] = clone(o[p]);
+            for (p in obj) {
+                result[p] = clone(obj[p]);
             }
-        } else if (isObject(o)) {
-            if (isFunction(o.clone)) {
-                return o.clone();
+        } else if (isObject(obj)) {
+            if (isFunction(obj.clone)) {
+                return obj.clone();
             }
 
             result = {};
 
-            // See comment in declaration of IS_DONTENUM_BUGGY for details
-            if (object && IS_DONTENUM_BUGGY) {
-                safeCopyProperty(result, o, ['toString', 'valueOf']);
+            // See comment in declaration of DONT_ENUM_BUG for details
+            if (DONT_ENUM_BUG) {
+                safeCopyProperty(result, obj, ['toString', 'valueOf']);
             }
 
-            for (p in o) {
-                if (o.hasOwnProperty(p)) {
-                    result[p] = clone(o[p]);
+            for (p in obj) {
+                if (obj.hasOwnProperty(p)) {
+                    result[p] = clone(obj[p]);
                 }
             }
 
             return result;
         }
 
-        return o;
+        return obj;
     }
 
     function extend(/*[ deep,] target, srcA[, srcB[, ...]] */) {
@@ -215,8 +237,8 @@
         for (i = 0, len = src.length; i < len; i++) {
             o = src[i] || {};
 
-            // See comment in declaration of IS_DONTENUM_BUGGY for details
-            if (IS_DONTENUM_BUGGY) {
+            // See comment in declaration of DONT_ENUM_BUG for details
+            if (DONT_ENUM_BUG) {
                 safeCopyProperty(tgt, o, ['toString', 'valueOf']);
             }
 
@@ -235,7 +257,7 @@
         }
 
         return tgt;
-    };
+    }
 
     /*
     * Perform an action on each element in an array-like object.

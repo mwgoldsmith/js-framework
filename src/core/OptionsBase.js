@@ -1,7 +1,8 @@
-﻿define([
+﻿/*global isPlainObject,isObject,isFunction,isString*/
+define([
     '../core'
 ], function (mdsol) {
-    mdsol.OptionsBase = (function (undefined) {
+    mdsol.OptionsBase = (function () {
         // TODO: Cleanup
         // There are a number of things about this object I don't like.
         // For now, as long as it works leave it alone.
@@ -95,7 +96,7 @@
             function applyDefaultOptions() {
                 var opts, defs, c;
 
-                for (c = obj; c; ) {
+                for (c = obj; c;) {
                     if (c.hasOwnProperty('_options')) {
                         break;
                     }

@@ -1,12 +1,12 @@
-﻿define([
+﻿/*global noop,makeArray,clone,isFunction,isArray,extend*/
+define([
     '../core',
+    '../ajax',
     '../core/BitFlags',
     '../core/OptionsBase',
-    '../ajax'
+    '../ui/MessageBox'
 ], function (mdsol) {
-    // NOTE: Requires mdsol.ui.MessageBox, which has not yet been implemented
-
-    mdsol.ajax.Method = (function (undefined) {
+    mdsol.ajax.Method = (function () {
         var BASE_URL = 'http://dlcdkpcs1.ad.mdsol.com/api/Services/',
             _statusFlags = {
                 NONE: 0,                // The method has not yet executed

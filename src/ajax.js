@@ -1,4 +1,6 @@
-﻿define([
+﻿/*global isEmpty,isFunction,namespace,extend*/
+// @DONE (2013-09-17 11:06)
+define([
     './core'
 ], function (mdsol, $) {
     namespace('mdsol.ajax');

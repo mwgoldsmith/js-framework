@@ -1,15 +1,16 @@
-﻿define([
+﻿/*global proxy,toArray*/
+define([
     '../core',
     './Class',
     '../var/isArray',
     '../var/push',
     '../var/slice'
 ], function (mdsol, isArray, push, slice) {
-    mdsol.ObjectArray = (function (undefined) {
+    mdsol.ObjectArray = (function () {
         'use strict';
 
         var ARRAY_METHODS = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift', 'slice'],
-            _softIndexOf = function(arr, value) {
+            _softIndexOf = function (arr, value) {
                 var i, len;
             
                 // Return the index of the first match for `value` within the
@@ -43,7 +44,7 @@
 
                 values = isArray(args[0]) ? args[0] : toArray(args);
 
-                for (i = baseArray.length; i--; ) {
+                for (i = baseArray.length; i--;) {
                     v = _getProperty(baseArray[i], prop);
 
                     if (!!(exclude ^ !(v !== undefined && _softIndexOf(values, v) !== -1))) {
@@ -63,7 +64,7 @@
 
                 values = isArray(args[0]) ? args[0] : toArray(args);
 
-                for (i = baseArray.length; i--; ) {
+                for (i = baseArray.length; i--;) {
                     item = baseArray[i];
                     v = _getProperty(item, prop);
 
@@ -74,14 +75,14 @@
 
                 return result;
             },
-            _getUnique = function(/* varKey */) {
+            _getUnique = function (/* varKey */) {
                 var props = slice.call(arguments),
                     baseArray = this._array,
                     item, i, j,
                     exists,
                     unique = [];
 
-                for (i = baseArray.length; i--; ) {
+                for (i = baseArray.length; i--;) {
                     item = baseArray[i];
 
                     exists = unique.some(function (e) {
@@ -130,7 +131,7 @@
                     var baseArray = this._array,
                         i, item, v;
 
-                    for (i = baseArray.length; i--; ) {
+                    for (i = baseArray.length; i--;) {
                         item = baseArray[i];
                         v = _getProperty(item, key);
 
@@ -166,7 +167,7 @@
                     return _getAll.apply(this, args);
                 },
             
-                getUnique: function(/* varKeys */) {
+                getUnique: function (/* varKeys */) {
                     return _getUnique.apply(this, arguments);
                 },
             
@@ -192,7 +193,7 @@
                 /*
                 * Returns the index in the collection of the last match for the key:value pair
                 */
-                lastIndexOf: function (key, value) {
+                lastIndexOf: function (/*key, value*/) {
                     // TODO: Implement
                 },
                 
@@ -225,7 +226,7 @@
                         baseArray = this._array,
                         i, v;
 
-                    for (i = baseArray.length; i--; ) {
+                    for (i = baseArray.length; i--;) {
                         v = _getProperty(baseArray[i], key);
 
                         if (v !== undefined && (!unique || _softIndexOf(values, v) === -1)) {
@@ -245,7 +246,7 @@
                         return baseArray.length;
                     } else {
                         // Returns number of objects in the collection matching the key:value pair
-                        for (i = baseArray.length; i--; ) {
+                        for (i = baseArray.length; i--;) {
                             if (_getProperty(baseArray[i], key) == value) {
                                 len++;
                             }
@@ -287,7 +288,7 @@
                     push.apply(args, arguments);
 
                     return _filterItems.apply(this, args);
-                },
+                }
             };
 
         function ObjectArray(value) {

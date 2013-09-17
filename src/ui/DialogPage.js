@@ -1,7 +1,7 @@
 ﻿define([
     '../core'
 ], function (mdsol) {
-    mdsol.ui.DialogPage = (function (undefined) {
+    mdsol.ui.DialogPage = (function () {
         'use strict';
 
         function DialogPage() {

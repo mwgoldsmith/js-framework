@@ -1,32 +1,27 @@
-﻿define(function () {
-    return (function (map, undefined) {
-        var objToString = ({}).toString,
-            p, o;
+﻿// @DONE (2013-09-17 09:20)
+define(function () {
+    return (function () {
+        var toString = ({}).toString,
+            map = {
+                'String': '',
+                'Number': 0,
+                'Date': new Date(),
+                'Boolean': true,
+                'RegExp': /./,
+                'Array': [],
+                'Object': {},
+                'Function': function () {}
+            },
+            hash = {},
+            type, value;
 
-        function natives(type) {
-            return natives['[object ' + type.charAt(0).toUpperCase() + type.slice(1) + ']'];
-        }
-
-        for (p in map) {
-            if (map.hasOwnProperty(p)) {
-                o = map[p];
-                if (o !== undefined && o !== null) {
-                    natives[objToString.call(o)] = o.constructor.prototype;
-                }
+        for (type in map) {
+            value = map.hasOwnProperty(type) && map[type];
+            if (value) {
+                hash[toString.call(value)] = value.constructor.prototype;
             }
         }
 
-        return natives;
-    } ({
-        'Null': null,
-        'Undefined': undefined,
-        'String': '',
-        'Number': 0,
-        'Date': new Date(),
-        'Boolean': true,
-        'RegExp': /./,
-        'Array': [],
-        'Object': {},
-        'Function': function () { }
-    }));
+        return hash;
+    } ());
 });

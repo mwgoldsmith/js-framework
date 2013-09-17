@@ -1,7 +1,7 @@
 ﻿define([
     '../core'
 ], function (mdsol) {
-    mdsol.ui.Dropdown = (function (undefined) {
+    mdsol.ui.Dropdown = (function () {
         'use strict';
 
         function Dropdown() {

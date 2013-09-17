@@ -1,7 +1,9 @@
-﻿define([
+﻿/*global clone,isFunction,toArray*/
+define([
     '../core',
     '../var/push',
     './Method',
+    '../session',
     '../core/Class'
 ], function (mdsol, push) {
     // NOTE: This requires mdsol.session, which is not yet implemented
@@ -17,6 +19,7 @@
             var _options = clone(options),
                 _public = {
                     execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
+                        // TODO: Check that we are correctly referencing the session ID
                         var token = mdsol.session.dbUser.session_id,
                             fieldData = '', newArgs = [this, 'execute'];
 
@@ -43,7 +46,7 @@
             return mdsol.Class(this, _public)
                 .base(_options)
                 .valueOf();
-        };
+        }
 
         return mdsol.Class(UpsertMethod)
             .inherits(mdsol.ajax.Method)
