@@ -8,7 +8,13 @@
         './core/BitFlags',
         './core/Enum',
         './core/Class',
-        './core/ObjectArray'
+        './ui/DialogBox',
+        './ui/DialogPage',
+        './ui/DialogSubpage',
+        './ui/Dropdown',
+        './ui/DropdownMenu',
+        './ui/DropdownSelect',
+        './ui/MessageBox'
     ], function(mdsol) {
 
     // Expose mdsol, even in AMD and CommonJS for browser emulators
