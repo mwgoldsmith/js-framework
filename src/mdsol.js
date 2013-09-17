@@ -8,9 +8,7 @@
         './core/BitFlags',
         './core/Enum',
         './core/Class',
-        './core/ObjectArray',
-        './ajax/RequestMethod',
-        './ajax/UpsertMethod'
+        './core/ObjectArray'
     ], function(mdsol) {
 
     // Expose mdsol, even in AMD and CommonJS for browser emulators
