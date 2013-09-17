@@ -2,8 +2,6 @@
     './core',
     './var/trim'
 ], function (mdsol, trim) {
-    var REGEX_TRIM = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
-
     extend(mdsol, {
         alphaNumeric: function (value) {
             // Removes non alpha-numeric values from the specified string.
@@ -15,7 +13,8 @@
                 return text === null ? '' : trim.call(text);
             } :
             function(text) {
-                return text === null ? '' : (text + '').replace(REGEX_TRIM, '');
+                return text === null ? '' : (text + '')
+                    .replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
             }
     });
 });

@@ -8,27 +8,112 @@
     './var/slice',
     './var/toString'
 ], function (global, hasOwnProperty, isArray, keys, natives, push, slice, toString) {
-    var IS_DONTENUM_BUGGY = (function () {
-        // Thanks Prototype! (https://github.com/sstephenson/prototype/blob/master/src/prototype/lang/class.js)
+    var mdsol = {},
+        IS_DONTENUM_BUGGY = !({ toString: null }).propertyIsEnumerable('toString');
 
-        // Some versions of JScript fail to enumerate over properties, names of which 
-        // correspond to non-enumerable properties in the prototype chain. IE6 doesn't
-        // enumerate `toString` and `valueOf` (among other built-in `Object.prototype`)
-        // properties.
-        for (var p in { toString: 1 }) {
-            if (p === 'toString') {
-                return false;
+    function namespace(identifier, objects) {
+        var ns = global, parts, i, item;
+
+        if (identifier !== '') {
+            parts = identifier.split('.');
+            for (i = 0; i < parts.length; i++) {
+                if (!ns[parts[i]]) {
+                    ns[parts[i]] = {};
+                }
+
+                ns = ns[parts[i]];
             }
         }
-        return true;
-    })();
 
-    function isObject(o) {
-        return toString.call(o) === '[object Object]';
+        if (!objects) {
+            return ns;
+        }
+
+        for (item in objects) {
+            if (objects.hasOwnProperty(item)) {
+                ns[item] = objects[item];
+            }
+        }
+
+        return ns;
+    };
+
+    function isString(obj) {
+        return typeof obj === 'string';
+    }
+
+    function isNumber(obj) {
+        return typeof obj === 'number';
+    }
+
+    function isObject(obj) {
+        return toString.call(obj) === '[object Object]';
     }
 
     function isFunction(obj) {
         return toString.call(obj) === '[object Function]';
+    }
+
+    function isPlainObject(obj) {
+        var key;
+
+        // Borrowed for jQuery v1.8.2 (why re-invent the wheel)
+
+        // Must be an Object.
+        // Because of IE, we also have to check the presence of the constructor property.
+        // Make sure that DOM nodes and window objects don't pass through, as well
+        if (!obj || !isObject(obj) || obj.nodeType || obj === obj.window) {
+            return false;
+        }
+
+        try {
+            // Not own constructor property must be Object
+            if (obj.constructor &&
+                !hasOwnProperty.call(obj, 'constructor') &&
+                !hasOwnProperty.call(obj.constructor.prototype, 'isPrototypeOf')) {
+                return false;
+            }
+        } catch (e) {
+            // IE8,9 Will throw exceptions on certain host objects #9897
+            return false;
+        }
+
+        // Own properties are enumerated firstly, so to speed up,
+        // if last one is own, then all properties are own.
+        for (key in obj) {
+        }
+
+        return key === undefined || hasOwnProperty.call(obj, key);
+    }
+
+    function isDate(o) {
+        return toString.call(o) === '[object Date]';
+    }
+
+    function isEmpty(o) {
+        var p;
+
+        if (o === null || o === undefined) {
+            return true;
+        } else if (typeof o === 'string' || isArray(o)) {
+            return !!o.length;
+        } else if (!isObject(o)) {
+            throw new TypeError('Invalid data type.');
+        }
+
+        for (p in o) {
+            return !p;
+        }
+
+        return true;
+    }
+
+    function isOwn(obj, key) {
+        return hasOwnProperty.call(obj, key);
+    }
+
+    function getType(obj) {
+        return toString.call(obj).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
     }
 
     function toArray(value) {
@@ -57,6 +142,27 @@
                 tgt[m] = org[m];
             }
         }
+    }
+
+    function exists(identifier) {
+        /* Checks if the specified identifier is defined */
+        var a, i, len,
+            ns = global;
+
+        if (!identifier) {
+            return false;
+        }
+
+        a = identifier.split('.');
+        for (i = 0, len = a.length; i < len; i++) {
+            if (!ns[a[i]]) {
+                return false;
+            }
+
+            ns = ns[a[i]];
+        }
+
+        return true;
     }
 
     function clone(o) {
@@ -131,209 +237,151 @@
         return tgt;
     };
 
+    /*
+    * Perform an action on each element in an array-like object.
+    */
+    function each(array, action) {
+        var i, len;
+
+        for (i = 0, len = array.length; i < len; i++) {
+            action(array[i]);
+        }
+
+        return mdsol;
+    }
+
+    function merge() {
+        var args = [{}];
+
+        push.apply(args, arguments);
+
+        return extend.apply(this, args);
+    }
+
+    function values(obj) {
+        var result = [], p;
+
+        for (p in obj) {
+            result.push(obj[p]);
+        }
+
+        return result;
+    }
+
+    /*
+    * Convert an array-like object to an array.
+    * Ideal for converting `arguments` to an array.
+    * For performance sake, this is a separate method from toArray.
+    */
+    function makeArray(obj, index) {
+        return slice.call(obj, index || 0);
+    }
+
+    function getValue(o, identifier) {
+        var a = identifier.split('.'),
+            item = o,
+            i, len;
+
+        for (i = 0, len = a.length; i < len && item; i++) {
+            item = a[i] in item ? item[a[i]] : undefined;
+        }
+
+        return item;
+    }
+
     function proxy(obj, target, callback, methods) {
         var nativeProto = natives[toString.call(target)],
-            overrides = [],
-            p;
+            override;
 
-        for (p in nativeProto) {
-            if (nativeProto.hasOwnProperty(p)
-                && isFunction(nativeProto[p])
-                && (!methods.length || methods.indexOf(p) !== -1)) {
-                overrides.push(p);
+        for (override in nativeProto) {
+            if (nativeProto.hasOwnProperty(override)
+                && isFunction(nativeProto[override])
+                && (!methods.length || methods.indexOf(override) !== -1)
+                && target[override] === undefined) {
+                /*
+                * Create native method on `target` which will call `callback` if provided;
+                * otherwise, the call will be applied directly to `target`. Prevent
+                * clobber of existing methods if present.
+                */
+                target[override] = (function (that, tgt, c, nativeMethod) {
+                    return c
+                        ? function () {
+                            return c.call(that, tgt, override, nativeMethod);
+                        }
+                        : function () {
+                            return nativeMethod.apply(tgt, arguments);
+                        };
+                } (obj, target, callback, nativeProto[override]));
             }
         }
 
-        return (function (that, tgt, c) {
-            /*
-            * Create native methods on `that` which will call `callback` if provided;
-            * otherwise, the call will be applied directly to `target`. Prevent
-            * clobber of existing methods if present.
-            */
-            mdsol.each(overrides, function (override) {
-                if (that[override] === undefined) {
-                    var nativeMethod = nativeProto[override];
+        return obj;
+    }
 
-                    that[override] = (c || function (/* tgt, override, nativeMethod */) {
-                        return function () {
-                            return nativeMethod.apply(tgt, arguments);
-                        };
-                    }).call(that, tgt, override, nativeMethod);
-                }
-            });
+    function noop() {
+        return function () { };
+    }
 
-            return that;
-        } (obj, target, callback));
+    function wrap(func, wrapper) {
+        return function () {
+            var args = [func];
+            push.apply(args, arguments);
+            return wrapper.apply(this, args);
+        };
     }
 
     // Extend our base object with our public methods
-    return extend(mdsol, {
+    extend(mdsol, {
         clone: clone,
 
-        each: function (array, action) {
-            var i, len;
-
-            for (i = 0, len = array.length; i < len; i++) {
-                action(array[i]);
-            }
-
-            return mdsol;
-        },
+        each: each,
 
         error: function (msg) {
             throw new Error(msg);
         },
 
-        exists: function (identifier) {
-            /* Checks if the specified identifier is defined */
-            var a, i, len,
-                ns = global;
-
-            if (!identifier) {
-                return false;
-            }
-
-            a = identifier.split('.');
-            for (i = 0, len = a.length; i < len; i++) {
-                if (!ns[a[i]]) {
-                    return false;
-                }
-
-                ns = ns[a[i]];
-            }
-
-            return true;
-        },
+        exists: exists,
 
         extend: extend,
 
-        getType: function (o) {
-            return toString.call(o).match(/\s([a-zA-Z]+)/)[1].toLowerCase();
-        },
+        getType: getType,
 
-        getValue: function (o, identifier) {
-            var a = identifier.split('.'),
-            item = o,
-            i, len;
-
-            for (i = 0, len = a.length; i < len && item; i++) {
-                item = a[i] in item ? item[a[i]] : undefined;
-            }
-
-            return item;
-        },
+        getValue: getValue,
 
         isArray: isArray,
 
-        isDate: function (o) {
-            return toString.call(o) === '[object Date]';
-        },
+        isDate: isDate,
 
-        isEmpty: function (o) {
-            var p;
-
-            if (o === null || o === undefined) {
-                return true;
-            } else if (typeof o === 'string' || isArray(o)) {
-                return !!o.length;
-            } else if (!isObject(o)) {
-                throw new TypeError('Invalid data type.');
-            }
-
-            for (p in o) {
-                return !p;
-            }
-
-            return true;
-        },
+        isEmpty: isEmpty,
 
         isFunction: isFunction,
 
-        isNumber: function (o) {
-            return typeof o === 'number';
-        },
+        isNumber: isNumber,
 
         isObject: isObject,
 
-        isOwn: function (obj, key) {
-            return hasOwnProperty.call(obj, key);
-        },
+        isOwn: isOwn,
 
-        isPlainObject: function (o) {
-            var key;
+        isPlainObject: isPlainObject,
 
-            // Borrowed for jQuery v1.8.2 (why re-invent the wheel)
-
-            // Must be an Object.
-            // Because of IE, we also have to check the presence of the constructor property.
-            // Make sure that DOM nodes and window objects don't pass through, as well
-            if (!o || !isObject(o) || o.nodeType || o === o.window) {
-                return false;
-            }
-
-            try {
-                // Not own constructor property must be Object
-                if (o.constructor &&
-                !hasOwnProperty.call(o, 'constructor') &&
-                !hasOwnProperty.call(o.constructor.prototype, 'isPrototypeOf')) {
-                    return false;
-                }
-            } catch (e) {
-                // IE8,9 Will throw exceptions on certain host objects #9897
-                return false;
-            }
-
-            // Own properties are enumerated firstly, so to speed up,
-            // if last one is own, then all properties are own.
-            for (key in o) { }
-
-            return key === undefined || hasOwnProperty.call(o, key);
-        },
-
-        isString: function (o) {
-            return typeof o === 'string';
-        },
+        isString: isString,
 
         keys: keys,
 
-        makeArray: function (arr, index) {
-            // For performance sake, this is a separate method from toArray
+        makeArray: makeArray,
 
-            return slice.call(arr, index || 0);
-        },
+        merge: merge,
 
-        merge: function () {
-            var args = [{}];
+        namespace: namespace,
 
-            push.apply(args, arguments);
+        noop: noop,
 
-            return extend.apply(this, args);
-        },
+        proxy: proxy,
 
-        noop: function () {
-            return function () { };
-        },
-
-        prxoy: proxy,
-        
         toArray: toArray,
 
-        values: function (obj) {
-            var result = [], p;
+        values: values,
 
-            for (p in obj) {
-                result.push(obj[p]);
-            }
-
-            return result;
-        },
-
-        wrap: function (func, wrapper) {
-            return function () {
-                var args = [func];
-                push.apply(args, arguments);
-                return wrapper.apply(this, args);
-            };
-        }
+        wrap: wrap
     });
 });

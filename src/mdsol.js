@@ -4,14 +4,17 @@
         './cookies',
         './json',
         './strings',
+        './ajax',
         './core/BitFlags',
         './core/Enum',
-        './core/ObjectArray'//,
-        //'./ajax/handler',
-        //'./ajax/method',
-        //'./ajax/requestmethod',
-        //'./ajax/upsertmethod',
-       // './exports/amd'
+        './core/Class',
+        './ui/DialogBox',
+        './ui/DialogPage',
+        './ui/DialogSubpage',
+        './ui/Dropdown',
+        './ui/DropdownMenu',
+        './ui/DropdownSelect',
+        './ui/MessageBox'
     ], function(mdsol) {
 
     // Expose mdsol, even in AMD and CommonJS for browser emulators
