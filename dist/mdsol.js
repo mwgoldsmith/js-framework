@@ -1,5 +1,5 @@
 (function(window) {
-
+  
 var global = (function () {
         // Access to global object without referencing window directly 
         // (strict mode compliant)
