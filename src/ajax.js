@@ -3,8 +3,6 @@
 define([
     './core'
 ], function (mdsol, $) {
-    namespace('mdsol.ajax');
-
     /*
     * Use IIFE to prevent cluttering of globals
     *
@@ -66,7 +64,7 @@ define([
                 callback(false, xhr, this.userData, this);
             }
         }
-        
+
         function jxhrRequest(uri, method, contentType, data, callback, userData) {
             var type = (contentType || 'html'),
                 params = {
@@ -90,22 +88,28 @@ define([
 
             return mdsol;
         }
+        
+        function post(uri, contentType, data, callback, userData) {
+            return jxhrRequest(uri, 'POST', contentType, data, callback, userData);
+        }
+        
+        function get (uri, contentType, data, callback, userData) {
+            return jxhrRequest(uri, 'GET', contentType, data, callback, userData);
+        }
+        
+        function dispose() {
+            // TODO: Perform any cleanup
+        }
 
         // Expose public members
-        extend(mdsol.ajax, {
+        namespace('mdsol.ajax', {
             contentTypeEnum: _contentTypeEnum,
 
-            post: function (uri, contentType, data, callback, userData) {
-                return jxhrRequest(uri, 'POST', contentType, data, callback, userData);
-            },
+            post: post,
 
-            get: function (uri, contentType, data, callback, userData) {
-                return jxhrRequest(uri, 'GET', contentType, data, callback, userData);
-            },
+            get: get,
 
-            dispose: function () {
-                // TODO: Perform any cleanup
-            }
+            dispose: dispose
         });
     } ());
 });

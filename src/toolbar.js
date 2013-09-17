@@ -3,8 +3,6 @@
 define([
     './core'
 ], function (mdsol) {
-    namespace('mdsol.toolbar');
-
     /*
     * Use IIFE to prevent cluttering of globals
     *
@@ -17,7 +15,7 @@ define([
         }
 
         // Expose public members
-        extend(mdsol.toolbar, {
+        namespace('mdsol.toolbar', {
             dispose: dispose
         });
     } ());

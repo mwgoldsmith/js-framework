@@ -14,10 +14,10 @@ define(function () {
             },
             hash = {},
             type, value;
-
+        
         for (type in map) {
-            value = map.hasOwnProperty(type) && map[type];
-            if (value) {
+            if (map.hasOwnProperty(type)) {
+                value = map[type];
                 hash[toString.call(value)] = value.constructor.prototype;
             }
         }

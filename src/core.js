@@ -9,8 +9,6 @@ define([
     './var/isArray',
     './var/keys'
 ], function (global, natives, hasOwnProperty, push, slice, toString, isArray, keys) {
-    var mdsol = {};
-   
     function namespace(identifier, objects) {
         var ns = global, parts, i, item;
 
@@ -353,7 +351,7 @@ define([
     }
 
     // Extend our base object with our public methods
-    extend(mdsol, {
+    namespace('mdsol', {
         clone: clone,
 
         each: each,

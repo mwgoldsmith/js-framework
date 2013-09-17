@@ -1,7 +1,7 @@
 ﻿define([
     '../core'
 ], function (mdsol) {
-    mdsol.Class = (function (undefined) {
+    mdsol.Class = (function () {
         function inherits(child, base) {
             child.parent = base.prototype;
             child.prototype = extend(Object.create(base.prototype), child.prototype);

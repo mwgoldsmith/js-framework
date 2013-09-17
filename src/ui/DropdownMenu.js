@@ -1,5 +1,6 @@
 ﻿define([
-    '../core'
+    '../core',
+    '../ui'
 ], function (mdsol) {
     mdsol.ui.DropdownMenu = (function () {
         'use strict';

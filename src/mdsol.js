@@ -21,7 +21,10 @@ define([
     // Application-specific modules:
     './ajax/RequestMethod',
     './ajax/UpsertMethod',
-    './schema',
+    './schema/Field',
+    './schema/Link',
+    './schema/Table',
+    './schema/TitleBar',
     './session',
     './toolbar'
 ], function (mdsol) {
