@@ -4,7 +4,7 @@
     './Class'
 ], function(mdsol, slice) {
     mdsol.BitFlags = (function(undefined) {
-        "use strict";
+        'use strict';
 
         function BitFlags(flagsObject, initValue) {
             if (!(this instanceof BitFlags)) {
