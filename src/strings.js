@@ -12,7 +12,7 @@ define([
         * Removes non alpha-numeric values from the specified string.
         */
         function alphaNumeric(value) {
-            return isString(value) ? value.replace(/\W/gi, '') : value;
+            return isString(value) ? value.replace(/\W/gi, '') : null;
         }
 
         extend(mdsol, {

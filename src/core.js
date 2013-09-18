@@ -36,18 +36,22 @@ define([
         return ns;
     }
 
+    function error (msg) {
+        throw new Error(msg);
+    }
+    
     /*
     * Checks if the provided object is a string.
     */
     function isString(obj) {
-        return typeof obj === 'string';
+        return toString.call(obj) === '[object String]';
     }
 
     /*
     * Checks if the provided object is a number.
     */
     function isNumber(obj) {
-        return typeof obj === 'number';
+        return obj - parseFloat(obj) >= 0;
     }
 
     /*
@@ -113,7 +117,7 @@ define([
             return true;
         }
         if (typeof o === 'string' || isArray(o)) {
-            return !!o.length;
+            return !o.length;
         }
         if (!isObject(o)) {
             throw new TypeError('Invalid data type.');
@@ -356,9 +360,7 @@ define([
 
         each: each,
 
-        error: function (msg) {
-            throw new Error(msg);
-        },
+        error: error,
 
         exists: exists,
 

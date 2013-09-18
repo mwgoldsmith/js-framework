@@ -1,5 +1,5 @@
-// @DONE (2013-09-17 09:43)
-(function($, undefined) {
+﻿// @DONE (2013-09-17 09:43)
+(function ($, undefined) {
     /*
     * Some versions of JScript fail to enumerate over properties, names of which 
     * correspond to non-enumerable properties in the prototype chain. IE6 doesn't
@@ -7,8 +7,9 @@
     * properties.
     */
     var DONT_ENUM_BUG = !({ toString: null }).propertyIsEnumerable('toString');
-// @DONE (2013-09-17 09:27)
-var global = (function () {
+    
+    // @DONE (2013-09-17 09:27)
+    var global = (function () {
         /*
         * Provides access to global object without referencing window directly.
         * Will work in strict mode.
@@ -16,8 +17,8 @@ var global = (function () {
         return this || (1, eval)('this');
     } ());
 
-// @DONE (2013-09-17 09:20)
-var natives = (function () {
+    // @DONE (2013-09-17 09:20)
+    var natives = (function () {
         var toString = ({}).toString,
             map = {
                 'String': '',
@@ -27,14 +28,14 @@ var natives = (function () {
                 'RegExp': /./,
                 'Array': [],
                 'Object': {},
-                'Function': function () {}
+                'Function': function () { }
             },
             hash = {},
             type, value;
 
         for (type in map) {
-            value = map.hasOwnProperty(type) && map[type];
-            if (value) {
+            if (map.hasOwnProperty(type)) {
+                value = map[type];
                 hash[toString.call(value)] = value.constructor.prototype;
             }
         }
@@ -42,20 +43,20 @@ var natives = (function () {
         return hash;
     } ());
 
-// @DONE (2013-09-17 09:32)
-var hasOwnProperty = natives['[object Object]'].hasOwnProperty;
+    // @DONE (2013-09-17 09:32)
+    var hasOwnProperty = natives['[object Object]'].hasOwnProperty;
 
-// @DONE (2013-09-17 09:35)
-var push = natives['[object Array]'].push;
+    // @DONE (2013-09-17 09:35)
+    var push = natives['[object Array]'].push;
 
-// @DONE (2013-09-17 09:34)
-var slice = natives['[object Array]'].slice;
+    // @DONE (2013-09-17 09:34)
+    var slice = natives['[object Array]'].slice;
 
-// @DONE (2013-09-17 09:33)
-var toString = natives['[object Object]'].toString;
+    // @DONE (2013-09-17 09:33)
+    var toString = natives['[object Object]'].toString;
 
-// @DONE (2013-09-17 09:30)
-var isArray = (function () {
+    // @DONE (2013-09-17 09:30)
+    var isArray = (function () {
         var isArray = [].constructor.isArray;
 
         /*
@@ -76,9 +77,9 @@ var isArray = (function () {
             };
     } ());
 
-/*global DONT_ENUM_BUG*/
-// @DONE (2013-09-17 10:20)
-var keys = (function () {
+    /*global DONT_ENUM_BUG*/
+    // @DONE (2013-09-17 10:20)
+    var keys = (function () {
         var keys = natives['[object Object]'].constructor.keys,
             dontEnum = [
                 'toString',
@@ -89,7 +90,7 @@ var keys = (function () {
                 'propertyIsEnumerable',
                 'constructor'
             ];
-        
+
         /*
         * Browser support for native implementation of `Object.keys`:
         *
@@ -128,10 +129,8 @@ var keys = (function () {
             };
     } ());
 
-/*global DONT_ENUM_BUG*/
+    /*global DONT_ENUM_BUG*/
 
-    var mdsol = {};
-   
     function namespace(identifier, objects) {
         var ns = global, parts, i, item;
 
@@ -163,14 +162,14 @@ var keys = (function () {
     * Checks if the provided object is a string.
     */
     function isString(obj) {
-        return typeof obj === 'string';
+        return toString.call(obj) === '[object String]';
     }
 
     /*
     * Checks if the provided object is a number.
     */
     function isNumber(obj) {
-        return typeof obj === 'number';
+        return obj - parseFloat(obj) >= 0;
     }
 
     /*
@@ -236,7 +235,7 @@ var keys = (function () {
             return true;
         }
         if (typeof o === 'string' || isArray(o)) {
-            return !!o.length;
+            return !o.length;
         }
         if (!isObject(o)) {
             throw new TypeError('Invalid data type.');
@@ -279,7 +278,7 @@ var keys = (function () {
             i;
 
         // Copy the property if it is not a native prototype method
-        for (i = methods.length; i--;) {
+        for (i = methods.length; i--; ) {
             m = methods[i];
             if (org[m] !== nativeProto[m]) {
                 tgt[m] = org[m];
@@ -474,7 +473,7 @@ var keys = (function () {
     }
 
     // Extend our base object with our public methods
-    extend(mdsol, {
+    namespace('mdsol', {
         clone: clone,
 
         each: each,
@@ -528,8 +527,8 @@ var keys = (function () {
         wrap: wrap
     });
 
-/*global extend*/
-// @DONE (2013-09-17 11:03)
+    /*global extend*/
+    // @DONE (2013-09-17 11:03)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -614,7 +613,7 @@ var keys = (function () {
 
             return global.unescape(output);
         }
-        
+
         extend(mdsol, {
             base64Encode: base64Encode,
 
@@ -622,8 +621,8 @@ var keys = (function () {
         });
     } ());
 
-/*global extend*/
-// @DONE (2013-09-17 11:03)
+    /*global extend*/
+    // @DONE (2013-09-17 11:03)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -643,9 +642,9 @@ var keys = (function () {
         }
 
         function setCookie(name, value, domain, expiration) {
-            global.document.cookie = name + '=' + value 
-                + (expiration ? '; expires=' + expiration : '') 
-                + (domain ? '; domain=' + domain : '') 
+            global.document.cookie = name + '=' + value
+                + (expiration ? '; expires=' + expiration : '')
+                + (domain ? '; domain=' + domain : '')
                 + '; path=/';
 
             return mdsol;
@@ -656,7 +655,7 @@ var keys = (function () {
 
             return mdsol;
         }
-        
+
         extend(mdsol, {
             getCookie: getCookie,
 
@@ -666,8 +665,8 @@ var keys = (function () {
         });
     } ());
 
-// @DONE (2013-09-17 10:24)
-var trim = (function () {
+    // @DONE (2013-09-17 10:24)
+    var trim = (function () {
         var trim = natives['[object String]'].trim;
 
         /*
@@ -684,16 +683,16 @@ var trim = (function () {
         */
         return trim && !trim.call('\uFEFF\xA0') ?
             function (text) {
-                return text === null ? '' : trim.call(text);
+                return !text ? '' : trim.call(text);
             } :
             function (text) {
-                return text === null ? '' : (text + '')
+                return !text ? '' : (text + '')
                     .replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
             };
     } ());
 
-/*global isArray,isFunction,extend*/
-// @DONE (2013-09-17 11:00)
+    /*global isArray,isFunction,extend*/
+    // @DONE (2013-09-17 11:00)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -704,7 +703,7 @@ var trim = (function () {
             REGEX_VALID_ESCAPE = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
             REGEX_VALID_TOKENS = /"[^"\\\r\n]*"|true|false|null|-?(?:\d\d*\.|)\d+(?:[eE][\-+]?\d+|)/g,
             _regexCx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
-        
+
         function parseJson(text) {
             var data = trim(text);
 
@@ -733,7 +732,7 @@ var trim = (function () {
 
             throw new Error('Failed to parse JSON data.');
         }
-        
+
         function toJson(o) {
             var result = '',
                 values,
@@ -767,16 +766,16 @@ var trim = (function () {
 
             return '{' + result.slice(0, -1) + '}';
         }
-        
+
         extend(mdsol, {
             parseJson: parseJson,
 
             toJson: toJson
         });
-    }());
+    } ());
 
-/*global isString,extend*/
-// @DONE (2013-09-16 22:51)
+    /*global isString,extend*/
+    // @DONE (2013-09-16 22:51)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -786,7 +785,7 @@ var trim = (function () {
         * Removes non alpha-numeric values from the specified string.
         */
         function alphaNumeric(value) {
-            return isString(value) ? value.replace(/\W/gi, '') : value;
+            return isString(value) ? value.replace(/\W/gi, '') : null;
         }
 
         extend(mdsol, {
@@ -794,12 +793,10 @@ var trim = (function () {
 
             trim: trim
         });
-    }());
+    } ());
 
-/*global isEmpty,isFunction,namespace,extend*/
-// @DONE (2013-09-17 11:06)
-
-    namespace('mdsol.ajax');
+    /*global isEmpty,isFunction,namespace,extend*/
+    // @DONE (2013-09-17 11:06)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -862,7 +859,7 @@ var trim = (function () {
                 callback(false, xhr, this.userData, this);
             }
         }
-        
+
         function jxhrRequest(uri, method, contentType, data, callback, userData) {
             var type = (contentType || 'html'),
                 params = {
@@ -888,7 +885,7 @@ var trim = (function () {
         }
 
         // Expose public members
-        extend(mdsol.ajax, {
+        namespace('mdsol.ajax', {
             contentTypeEnum: _contentTypeEnum,
 
             post: function (uri, contentType, data, callback, userData) {
@@ -906,7 +903,7 @@ var trim = (function () {
     } ());
 
 
-    mdsol.Class = (function (undefined) {
+    mdsol.Class = (function () {
         function inherits(child, base) {
             child.parent = base.prototype;
             child.prototype = extend(Object.create(base.prototype), child.prototype);
@@ -1021,10 +1018,10 @@ var trim = (function () {
         return Class;
     } ());
 
-/*global clone,toArray*/
+    /*global clone,toArray*/
 
     mdsol.BitFlags = (function () {
-        
+
 
         function BitFlags(flagsObject, initValue) {
             if (!(this instanceof BitFlags)) {
@@ -1078,7 +1075,7 @@ var trim = (function () {
             function test(any, flags) {
                 var f, i, match = !any;
 
-                for (i = flags.length; i--;) {
+                for (i = flags.length; i--; ) {
                     f = flagValue(flags[i]);
 
                     // Test if the flag is set
@@ -1101,7 +1098,7 @@ var trim = (function () {
                 var i, value = 0;
 
                 // Combine flag(s) to set
-                for (i = flags.length; i--;) {
+                for (i = flags.length; i--; ) {
                     value = value | flagValue(flags[i]);
                 }
 
@@ -1157,12 +1154,12 @@ var trim = (function () {
         }
 
         return BitFlags;
-    }());
+    } ());
 
-/*global clone*/
+    /*global clone*/
 
     mdsol.Enum = (function () {
-        
+
 
         function Enum(enumObj, initValue) {
             if (!(this instanceof Enum)) {
@@ -1241,20 +1238,20 @@ var trim = (function () {
         }
 
         return Enum;
-    }());
+    } ());
 
-/*global proxy,toArray*/
+    /*global proxy,toArray*/
 
     mdsol.ObjectArray = (function () {
-        
+
 
         var ARRAY_METHODS = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift', 'slice'],
             _softIndexOf = function (arr, value) {
                 var i, len;
-            
+
                 // Return the index of the first match for `value` within the
                 // array. Strict comparison is not used.
-            
+
                 for (i = 0, len = arr.length; i < len; i++) {
                     if (arr[i] == value) {
                         return i;
@@ -1283,7 +1280,7 @@ var trim = (function () {
 
                 values = isArray(args[0]) ? args[0] : toArray(args);
 
-                for (i = baseArray.length; i--;) {
+                for (i = baseArray.length; i--; ) {
                     v = _getProperty(baseArray[i], prop);
 
                     if (!!(exclude ^ !(v !== undefined && _softIndexOf(values, v) !== -1))) {
@@ -1303,7 +1300,7 @@ var trim = (function () {
 
                 values = isArray(args[0]) ? args[0] : toArray(args);
 
-                for (i = baseArray.length; i--;) {
+                for (i = baseArray.length; i--; ) {
                     item = baseArray[i];
                     v = _getProperty(item, prop);
 
@@ -1321,7 +1318,7 @@ var trim = (function () {
                     exists,
                     unique = [];
 
-                for (i = baseArray.length; i--;) {
+                for (i = baseArray.length; i--; ) {
                     item = baseArray[i];
 
                     exists = unique.some(function (e) {
@@ -1362,7 +1359,7 @@ var trim = (function () {
 
                     return _filterItems.apply(this, args);
                 },
-                
+
                 /*
                 * Returns the first object in the collection which matches the key:value pair
                 */
@@ -1370,7 +1367,7 @@ var trim = (function () {
                     var baseArray = this._array,
                         i, item, v;
 
-                    for (i = baseArray.length; i--;) {
+                    for (i = baseArray.length; i--; ) {
                         item = baseArray[i];
                         v = _getProperty(item, key);
 
@@ -1381,7 +1378,7 @@ var trim = (function () {
 
                     return null;
                 },
-                
+
                 /*
                 * Returns all objects in the collection which match the key and any of the 
                 * provided values
@@ -1393,7 +1390,7 @@ var trim = (function () {
 
                     return _getAll.apply(this, args);
                 },
-            
+
                 /*
                 * Returns all objects in the collection which do not match the key and any
                 * of the provided values
@@ -1405,11 +1402,11 @@ var trim = (function () {
 
                     return _getAll.apply(this, args);
                 },
-            
+
                 getUnique: function (/* varKeys */) {
                     return _getUnique.apply(this, arguments);
                 },
-            
+
                 /*
                 * Returns the index in the collection of the first match for the key:value pair
                 */
@@ -1425,7 +1422,7 @@ var trim = (function () {
                             return i;
                         }
                     }
-                
+
                     return -1;
                 },
 
@@ -1435,7 +1432,7 @@ var trim = (function () {
                 lastIndexOf: function (/*key, value*/) {
                     // TODO: Implement
                 },
-                
+
                 /*
                 * Moves an item in the collection from one index to another
                 */
@@ -1465,7 +1462,7 @@ var trim = (function () {
                         baseArray = this._array,
                         i, v;
 
-                    for (i = baseArray.length; i--;) {
+                    for (i = baseArray.length; i--; ) {
                         v = _getProperty(baseArray[i], key);
 
                         if (v !== undefined && (!unique || _softIndexOf(values, v) === -1)) {
@@ -1485,7 +1482,7 @@ var trim = (function () {
                         return baseArray.length;
                     } else {
                         // Returns number of objects in the collection matching the key:value pair
-                        for (i = baseArray.length; i--;) {
+                        for (i = baseArray.length; i--; ) {
                             if (_getProperty(baseArray[i], key) == value) {
                                 len++;
                             }
@@ -1494,7 +1491,7 @@ var trim = (function () {
                         return len;
                     }
                 },
-                
+
                 /*
                 * Filters the collection to only contain objects which contain unique values
                 * for any of the provided values
@@ -1538,31 +1535,43 @@ var trim = (function () {
             if (value && !isArray(value)) {
                 throw new TypeError('Invalid data type for ObjectArray initialization value.');
             }
-        
+
             // TODO: Consider implementing more robust type-checking
             // We're making a pretty big assumption at this point that every element in
             // `value` (if provided) is an object. On the other hand, to force type
             // checking every time an ObjectArray is created could produce significant 
             // wasteful overhead. Consider having type checking enabled by default and
             // having an optional flag which can disable this.
-        
+
             this._array = value || [];
-        
+
             return proxy(this, this._array, null, ARRAY_METHODS);
         }
 
         return mdsol.Class(ObjectArray, _prototype).valueOf();
     } ());
 
+    /*
+    * Use IIFE to prevent cluttering of globals
+    */
+    (function () {
+        function dispose() {
+            return mdsol;
+        }
 
+        namespace('mdsol.ui', {
+            dispose: dispose
+        });
+    } ());
+    
     mdsol.ui.DialogBox = (function () {
-        
+
 
         function DialogBox() {
             if (!(this instanceof DialogBox)) {
                 return new DialogBox();
             }
-            
+
             return this;
         }
 
@@ -1571,7 +1580,7 @@ var trim = (function () {
 
 
     mdsol.ui.DialogPage = (function () {
-        
+
 
         function DialogPage() {
             if (!(this instanceof DialogPage)) {
@@ -1586,7 +1595,7 @@ var trim = (function () {
 
 
     mdsol.ui.DialogSubpage = (function () {
-        
+
 
         function DialogSubpage() {
             if (!(this instanceof DialogSubpage)) {
@@ -1601,7 +1610,7 @@ var trim = (function () {
 
 
     mdsol.ui.Dropdown = (function () {
-        
+
 
         function Dropdown() {
             if (!(this instanceof Dropdown)) {
@@ -1616,7 +1625,7 @@ var trim = (function () {
 
 
     mdsol.ui.DropdownMenu = (function () {
-        
+
 
         function DropdownMenu() {
             if (!(this instanceof DropdownMenu)) {
@@ -1631,7 +1640,7 @@ var trim = (function () {
 
 
     mdsol.ui.DropdownSelect = (function () {
-        
+
 
         function DropdownSelect() {
             if (!(this instanceof DropdownSelect)) {
@@ -1646,7 +1655,7 @@ var trim = (function () {
 
 
     mdsol.ui.MessageBox = (function () {
-        
+
 
         function MessageBox() {
             if (!(this instanceof MessageBox)) {
@@ -1659,7 +1668,7 @@ var trim = (function () {
         return MessageBox;
     } ());
 
-/*global isPlainObject,isObject,isFunction,isString*/
+    /*global isPlainObject,isObject,isFunction,isString*/
 
     mdsol.OptionsBase = (function () {
         // TODO: Cleanup
@@ -1755,7 +1764,7 @@ var trim = (function () {
             function applyDefaultOptions() {
                 var opts, defs, c;
 
-                for (c = obj; c;) {
+                for (c = obj; c; ) {
                     if (c.hasOwnProperty('_options')) {
                         break;
                     }
@@ -1783,7 +1792,7 @@ var trim = (function () {
         return OptionsBase;
     } ());
 
-/*global noop,makeArray,clone,isFunction,isArray,extend*/
+    /*global noop,makeArray,clone,isFunction,isArray,extend*/
 
     mdsol.ajax.Method = (function () {
         var BASE_URL = 'http://dlcdkpcs1.ad.mdsol.com/api/Services/',
@@ -1980,7 +1989,7 @@ var trim = (function () {
         return Method;
     } ());
 
-/*global merge,toArray,makeArray*/
+    /*global merge,toArray,makeArray*/
 
     mdsol.ajax.RequestMethod = (function () {
         var DEFAULT_PARAMS = ['audit_info', 'field_filter'],
@@ -2004,7 +2013,7 @@ var trim = (function () {
                 var audit = that.option('audit'),
                     fields = that.options('fields'),
                     newArgs = [that, 'execute'];
-                
+
                 // Major performance boost (see http://jsperf.com/arrayconcatvsarraypushapply)
                 push.apply(newArgs, args);
                 push.apply(newArgs, [audit ? 'y' : 'n', fields.join(',')]);
@@ -2040,10 +2049,8 @@ var trim = (function () {
         return mdsol.Class(RequestMethod).inherits(mdsol.ajax.Method).valueOf();
     } ());
 
-/*global namespace,extend*/
-// @DONE (2013-09-17 11:11)
-
-    namespace('mdsol.session');
+    /*global namespace,extend*/
+    // @DONE (2013-09-17 11:11)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -2054,15 +2061,15 @@ var trim = (function () {
         }
 
         // Expose public members
-        extend(mdsol.session, {
+        namespace('mdsol.session', {
             dispose: dispose
         });
     } ());
 
-/*global clone,isFunction,toArray*/
+    /*global clone,isFunction,toArray*/
 
     // NOTE: This requires mdsol.session, which is not yet implemented
-    
+
     mdsol.ajax.UpsertMethod = (function () {
         var DEFAULT_PARAMS = ['session_id', 'field_data'];
 
@@ -2109,8 +2116,31 @@ var trim = (function () {
     } ());
 
 
+    /*global namespace,extend*/
+    // @DONE (2013-09-17 11:11)
+
+    /*
+    * Use IIFE to prevent cluttering of globals
+    */
+    (function () {
+        function clear() {
+            return mdsol;
+        }
+
+        function dispose() {
+            return mdsol;
+        }
+
+        namespace('mdsol.schema', {
+            clear: clear,
+
+            dispose: dispose
+        });
+    } ());
+
+
     mdsol.schema.Field = (function () {
-        
+
 
         function Field() {
             if (!(this instanceof Field)) {
@@ -2125,7 +2155,7 @@ var trim = (function () {
 
 
     mdsol.schema.Table = (function () {
-        
+
 
         function Table() {
             if (!(this instanceof Table)) {
@@ -2140,38 +2170,12 @@ var trim = (function () {
 
 
     (function () {
-        
-        
+
+
     } ());
 
-/*global namespace,extend*/
-// @DONE (2013-09-17 11:11)
-
-    namespace('mdsol.schema');
-    
-    /*
-    * Use IIFE to prevent cluttering of globals
-    */
-    (function () {
-        function clear() {
-            return mdsol;
-        }
-        
-        function dispose() {
-            return mdsol;
-        }
-
-        extend(mdsol.schema, {
-            clear: clear,
-
-            dispose: dispose
-        });
-    } ());
-
-/*global namespace,extend*/
-// @DONE (2013-09-17 11:10)
-
-    namespace('mdsol.toolbar');
+    /*global namespace,extend*/
+    // @DONE (2013-09-17 11:10)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -2185,15 +2189,13 @@ var trim = (function () {
         }
 
         // Expose public members
-        extend(mdsol.toolbar, {
+        namespace('mdsol.toolbar', {
             dispose: dispose
         });
     } ());
 
-// @DONE (2013-09-16 21:12)
+    // @DONE (2013-09-16 21:12)
 
 
-    // Expose mdsol library
-    return (window.mdsol = mdsol);
-// @DONE (2013-09-17 08:00)
-}());
+    // @DONE (2013-09-17 08:00)
+} (jQuery));

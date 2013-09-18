@@ -19,10 +19,10 @@ define([
         */
         return trim && !trim.call('\uFEFF\xA0') ?
             function (text) {
-                return text === null ? '' : trim.call(text);
+                return !text ? '' : trim.call(text);
             } :
             function (text) {
-                return text === null ? '' : (text + '')
+                return !text ? '' : (text + '')
                     .replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
             };
     } ());
