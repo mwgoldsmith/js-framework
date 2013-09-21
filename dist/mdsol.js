@@ -1,5 +1,5 @@
-﻿// @DONE (2013-09-17 09:43)
-(function ($, undefined) {
+// @DONE (2013-09-17 09:43)
+(function($, undefined) {
     /*
     * Some versions of JScript fail to enumerate over properties, names of which 
     * correspond to non-enumerable properties in the prototype chain. IE6 doesn't
@@ -7,9 +7,9 @@
     * properties.
     */
     var DONT_ENUM_BUG = !({ toString: null }).propertyIsEnumerable('toString');
-    
-    // @DONE (2013-09-17 09:27)
-    var global = (function () {
+
+// @DONE (2013-09-17 09:27)
+var global = (function () {
         /*
         * Provides access to global object without referencing window directly.
         * Will work in strict mode.
@@ -17,8 +17,8 @@
         return this || (1, eval)('this');
     } ());
 
-    // @DONE (2013-09-17 09:20)
-    var natives = (function () {
+// @DONE (2013-09-17 09:20)
+var natives = (function () {
         var toString = ({}).toString,
             map = {
                 'String': '',
@@ -28,11 +28,11 @@
                 'RegExp': /./,
                 'Array': [],
                 'Object': {},
-                'Function': function () { }
+                'Function': function () {}
             },
             hash = {},
             type, value;
-
+        
         for (type in map) {
             if (map.hasOwnProperty(type)) {
                 value = map[type];
@@ -43,20 +43,20 @@
         return hash;
     } ());
 
-    // @DONE (2013-09-17 09:32)
-    var hasOwnProperty = natives['[object Object]'].hasOwnProperty;
+// @DONE (2013-09-17 09:32)
+var hasOwnProperty = natives['[object Object]'].hasOwnProperty;
 
-    // @DONE (2013-09-17 09:35)
-    var push = natives['[object Array]'].push;
+// @DONE (2013-09-17 09:35)
+var push = natives['[object Array]'].push;
 
-    // @DONE (2013-09-17 09:34)
-    var slice = natives['[object Array]'].slice;
+// @DONE (2013-09-17 09:34)
+var slice = natives['[object Array]'].slice;
 
-    // @DONE (2013-09-17 09:33)
-    var toString = natives['[object Object]'].toString;
+// @DONE (2013-09-17 09:33)
+var toString = natives['[object Object]'].toString;
 
-    // @DONE (2013-09-17 09:30)
-    var isArray = (function () {
+// @DONE (2013-09-17 09:30)
+var isArray = (function () {
         var isArray = [].constructor.isArray;
 
         /*
@@ -77,9 +77,9 @@
             };
     } ());
 
-    /*global DONT_ENUM_BUG*/
-    // @DONE (2013-09-17 10:20)
-    var keys = (function () {
+/*global DONT_ENUM_BUG*/
+// @DONE (2013-09-17 10:20)
+var keys = (function () {
         var keys = natives['[object Object]'].constructor.keys,
             dontEnum = [
                 'toString',
@@ -90,7 +90,7 @@
                 'propertyIsEnumerable',
                 'constructor'
             ];
-
+        
         /*
         * Browser support for native implementation of `Object.keys`:
         *
@@ -129,7 +129,7 @@
             };
     } ());
 
-    /*global DONT_ENUM_BUG*/
+/*global DONT_ENUM_BUG*/
 
     function namespace(identifier, objects) {
         var ns = global, parts, i, item;
@@ -156,6 +156,10 @@
         }
 
         return ns;
+    }
+
+    function error(msg) {
+        throw new Error(msg);
     }
 
     /*
@@ -433,19 +437,19 @@
 
     function proxy(obj, target, callback, methods) {
         var nativeProto = natives[toString.call(target)],
-            override;
+            available = Object.getOwnPropertyNames(nativeProto),
+            override, i;
 
-        for (override in nativeProto) {
-            if (nativeProto.hasOwnProperty(override)
-                && isFunction(nativeProto[override])
-                && (!methods.length || methods.indexOf(override) !== -1)
-                && target[override] === undefined) {
+        for (i = available.length; i--; ) {
+            override = available[i];
+            if ((!methods.length || methods.indexOf(override) !== -1)
+                && !target.hasOwnProperty(override)) {
                 /*
                 * Create native method on `target` which will call `callback` if provided;
                 * otherwise, the call will be applied directly to `target`. Prevent
                 * clobber of existing methods if present.
                 */
-                target[override] = (function (that, tgt, c, nativeMethod) {
+                obj[override] = (function (that, tgt, c, nativeMethod) {
                     return c
                         ? function () {
                             return c.call(that, tgt, override, nativeMethod);
@@ -478,9 +482,7 @@
 
         each: each,
 
-        error: function (msg) {
-            throw new Error(msg);
-        },
+        error: error,
 
         exists: exists,
 
@@ -527,8 +529,8 @@
         wrap: wrap
     });
 
-    /*global extend*/
-    // @DONE (2013-09-17 11:03)
+/*global extend*/
+// @DONE (2013-09-17 11:03)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -613,7 +615,7 @@
 
             return global.unescape(output);
         }
-
+        
         extend(mdsol, {
             base64Encode: base64Encode,
 
@@ -621,8 +623,8 @@
         });
     } ());
 
-    /*global extend*/
-    // @DONE (2013-09-17 11:03)
+/*global extend*/
+// @DONE (2013-09-17 11:03)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -642,9 +644,9 @@
         }
 
         function setCookie(name, value, domain, expiration) {
-            global.document.cookie = name + '=' + value
-                + (expiration ? '; expires=' + expiration : '')
-                + (domain ? '; domain=' + domain : '')
+            global.document.cookie = name + '=' + value 
+                + (expiration ? '; expires=' + expiration : '') 
+                + (domain ? '; domain=' + domain : '') 
                 + '; path=/';
 
             return mdsol;
@@ -655,7 +657,7 @@
 
             return mdsol;
         }
-
+        
         extend(mdsol, {
             getCookie: getCookie,
 
@@ -665,8 +667,8 @@
         });
     } ());
 
-    // @DONE (2013-09-17 10:24)
-    var trim = (function () {
+// @DONE (2013-09-17 10:24)
+var trim = (function () {
         var trim = natives['[object String]'].trim;
 
         /*
@@ -691,8 +693,8 @@
             };
     } ());
 
-    /*global isArray,isFunction,extend*/
-    // @DONE (2013-09-17 11:00)
+/*global isArray,isFunction,extend*/
+// @DONE (2013-09-17 11:00)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -703,7 +705,7 @@
             REGEX_VALID_ESCAPE = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
             REGEX_VALID_TOKENS = /"[^"\\\r\n]*"|true|false|null|-?(?:\d\d*\.|)\d+(?:[eE][\-+]?\d+|)/g,
             _regexCx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
-
+        
         function parseJson(text) {
             var data = trim(text);
 
@@ -732,7 +734,7 @@
 
             throw new Error('Failed to parse JSON data.');
         }
-
+        
         function toJson(o) {
             var result = '',
                 values,
@@ -766,16 +768,16 @@
 
             return '{' + result.slice(0, -1) + '}';
         }
-
+        
         extend(mdsol, {
             parseJson: parseJson,
 
             toJson: toJson
         });
-    } ());
+    }());
 
-    /*global isString,extend*/
-    // @DONE (2013-09-16 22:51)
+/*global isString,extend*/
+// @DONE (2013-09-16 22:51)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -793,10 +795,10 @@
 
             trim: trim
         });
-    } ());
+    }());
 
-    /*global isEmpty,isFunction,namespace,extend*/
-    // @DONE (2013-09-17 11:06)
+/*global isEmpty,isFunction,namespace,extend*/
+// @DONE (2013-09-17 11:06)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -814,6 +816,36 @@
                 HTML: 'text/html; charset=utf-8'
             };
 
+        function container(value) {
+            var $container;
+
+            if (!arguments.length) {
+                return _$element && _$element.parent();
+            }
+
+            // Destroy current element
+            if (_$element) {
+                _$element.remove();
+                _$element = null;
+            }
+
+            // Locate new container element
+            if (isString(value)) {
+                $container = $(value);
+            } else if (!value || (value && value.jquery)) {
+                $container = value;
+            }
+
+            // Create new element and append to container
+            if ($container) {
+                _$element = $('<div id="ajax_progress"><img src="./images/ajax.gif" /><span>Please wait...</span></div>')
+                    .hide()
+                    .appendTo($container);
+            }
+
+            return mdsol;
+        }
+
         function updateRequests(uuid, params) {
             if (arguments.length === 1) {
                 delete _requests[uuid];
@@ -825,15 +857,12 @@
                 // Create the 'please wait' display if it doesnt exist. This should only
                 // happen the first time an ajax request is made.
                 if (!_$element) {
-                    _$element = $('<div><img src="./images/ajax.gif" /><span>Please wait...</span></div>')
-                        .hide()
-                        .appendTo($('body'));
+                    container('body');
                 }
 
                 // Show 'waiting' display
-                _$element
-                    .show()
-                    .center();
+                _$element.show();
+                mdsol.ui.center(_$element);
             } else {
                 // Hide 'waiting' display
                 _$element.hide();
@@ -884,32 +913,105 @@
             return mdsol;
         }
 
+        function post(uri, contentType, data, callback, userData) {
+            return jxhrRequest(uri, 'POST', contentType, data, callback, userData);
+        }
+
+        function get(uri, contentType, data, callback, userData) {
+            return jxhrRequest(uri, 'GET', contentType, data, callback, userData);
+        }
+
+        function dispose() {
+            // TODO: Perform any cleanup
+
+            container(null);
+
+            return mdsol;
+        }
+
         // Expose public members
         namespace('mdsol.ajax', {
+            container: container,
+
             contentTypeEnum: _contentTypeEnum,
 
-            post: function (uri, contentType, data, callback, userData) {
-                return jxhrRequest(uri, 'POST', contentType, data, callback, userData);
-            },
+            post: post,
 
-            get: function (uri, contentType, data, callback, userData) {
-                return jxhrRequest(uri, 'GET', contentType, data, callback, userData);
-            },
+            get: get,
 
-            dispose: function () {
-                // TODO: Perform any cleanup
-            }
+            dispose: dispose
         });
     } ());
 
 
     mdsol.Class = (function () {
-        function inherits(child, base) {
-            child.parent = base.prototype;
-            child.prototype = extend(Object.create(base.prototype), child.prototype);
+        function inherits(child, parent) {
+            child.parent_ = parent.prototype;
+            child.prototype = extend(Object.create(parent.prototype), child.prototype);
             child.prototype.constructor = child;
 
             return child;
+        }
+
+        function base(/* [, argA[, argB[, ...]]] */) {
+            var caller = arguments.callee.caller,
+                target, that, f,
+                baseProto, baseFunc;
+
+            if (mdsol.DEBUG && !caller) {
+                throw new Error('base() cannot run in strict mode: arguments.caller not defined.');
+            }
+
+            // Ugliy fix for the fact that both Class.base() and Class().base() call
+            // this function using apply(). We need the function which called that
+            // method.
+            caller = caller.caller;
+
+            // If this is not a constructor, call the superclass method
+            if (!caller.parent_) {
+                return caller.super_.apply(this, arguments);
+            }
+
+            target = caller.parent_.constructor;
+            baseProto = this;
+
+            // Walk the prototype chain until we find [[Prototype]]
+            // for the base
+            while (baseProto) {
+                if (baseProto.constructor === target) {
+                    break;
+                }
+
+                baseProto = Object.getPrototypeOf(baseProto);
+            }
+
+            // Call the base class constructor in the context of its own
+            // [[Prototype]]. NOTE: This will cause the base constructor
+            // to fail to recognize it is instantiated using instanceof.
+            that = target.apply(baseProto, arguments);
+            if (that !== undefined) {
+                // Allow return value to override value of `this` to be
+                // consistant with typical constructor behaviour. See:
+                // http://www.ecma-international.org/ecma-262/5.1/#sec-13.2.2
+                // If the constructor returned a value for `this`, it is
+                // safe to assume it auto-instantiated. To preserve any
+                // public members exposed, move them to the [[Prototype]]
+                // of base.
+                extend(baseProto, that);
+            }
+
+            // Set a reference to the super method for each method on the
+            // object which also exists on the base. This way, every call
+            // to base() from a method will just need to retreive that 
+            // value instead of finding the base proto first.
+            for (f in this) {
+                baseFunc = isFunction(this[f]) && baseProto[f];
+                if (isFunction(baseFunc)) {
+                    this[f].super_ = baseFunc;
+                }
+            }
+
+            return this;
         }
 
         function Class(obj, proto) {
@@ -918,13 +1020,13 @@
                 _isConstructor = !_isInstance && isFunction(_class),
                 _public = {
                     mixin: function (/*sourceA [, sourceB[, ...]] */) {
-                        var a = mdsol.makeArray(arguments),
+                        var a = makeArray(arguments),
                             mixer;
 
                         // See http://jsperf.com/mixin-fun/2
                         while (a.length) {
                             mixer = a.shift();
-                            if (!mixer || !(mdsol.isFunction(mixer) || mdsol.isObject(mixer))) {
+                            if (!mixer || !(isFunction(mixer) || isObject(mixer))) {
                                 throw new Error('Invalid data type for mixin.');
                             }
 
@@ -934,14 +1036,14 @@
                         return _public;
                     },
 
-                    inherits: function (base) {
+                    inherits: function (baseConstructor) {
                         if (_isInstance) {
                             throw new Error('An already instantiated object cannot inherit from another object.');
-                        } else if (!base || !mdsol.isFunction(base)) {
+                        } else if (!base || !isFunction(baseConstructor)) {
                             throw new Error('Invalid base constructor.');
                         }
 
-                        inherits(_class, base);
+                        inherits(_class, baseConstructor);
 
                         return _public;
                     },
@@ -954,45 +1056,9 @@
                         return _public;
                     },
 
-                    base: function (method/* [, argA[, argB[, ...]]]*/) {
-                        var caller = arguments.callee.caller,
-                            target, args, c,
-                            found = false;
-
-                        if (mdsol.DEBUG && !caller) {
-                            throw new Error('base() cannot run in strict mode: arguments.caller not defined.');
-                        }
-
-                        target = caller.parent;
-                        args = mdsol.makeArray(arguments, target ? 0 : 1);
-
-                        // If this is a constructor, call the superclass constructor
-                        if (target) {
-                            target = target.constructor;
-                        } else {
-                            // If this is a method, locate the method in the prototype chain and
-                            // target the superclassed method (method of the next parent)
-                            for (c = _class.constructor; c; c = c.parent && c.parent.constructor) {
-                                if (c.prototype[method] === caller) {
-                                    found = true;
-                                } else if (found) {
-                                    target = c.prototype[method];
-                                    break;
-                                }
-                            }
-
-                            // If we did not find the caller in the prototype chain, then one of two
-                            // things happened:
-                            // 1) The caller is an instance method.
-                            // 2) This method was not called by the right caller.
-                            if (!target && _class[method] === caller) {
-                                target = _class.constructor.prototype[method];
-                            } else {
-                                throw new Error('base() can only call a method of the same name');
-                            }
-                        }
-
-                        return target.apply(_class, args);
+                    base: function () {
+                        _class = base.apply(_class, arguments);
+                        return _public;
                     },
 
                     valueOf: function () {
@@ -1013,15 +1079,19 @@
             return _public;
         };
 
-        Class.inherits = inherits;
+        return extend(Class, {
+            inherits: inherits,
 
-        return Class;
+            base: function (that) {
+                return base.apply(that, makeArray(arguments, 1));
+            }
+        });
     } ());
 
-    /*global clone,toArray*/
+/*global clone,toArray*/
 
     mdsol.BitFlags = (function () {
-
+        
 
         function BitFlags(flagsObject, initValue) {
             if (!(this instanceof BitFlags)) {
@@ -1075,7 +1145,7 @@
             function test(any, flags) {
                 var f, i, match = !any;
 
-                for (i = flags.length; i--; ) {
+                for (i = flags.length; i--;) {
                     f = flagValue(flags[i]);
 
                     // Test if the flag is set
@@ -1098,7 +1168,7 @@
                 var i, value = 0;
 
                 // Combine flag(s) to set
-                for (i = flags.length; i--; ) {
+                for (i = flags.length; i--;) {
                     value = value | flagValue(flags[i]);
                 }
 
@@ -1154,12 +1224,12 @@
         }
 
         return BitFlags;
-    } ());
+    }());
 
-    /*global clone*/
+/*global clone*/
 
     mdsol.Enum = (function () {
-
+        
 
         function Enum(enumObj, initValue) {
             if (!(this instanceof Enum)) {
@@ -1238,20 +1308,20 @@
         }
 
         return Enum;
-    } ());
+    }());
 
-    /*global proxy,toArray*/
+/*global proxy,toArray*/
 
     mdsol.ObjectArray = (function () {
-
+        
 
         var ARRAY_METHODS = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift', 'slice'],
             _softIndexOf = function (arr, value) {
                 var i, len;
-
+            
                 // Return the index of the first match for `value` within the
                 // array. Strict comparison is not used.
-
+            
                 for (i = 0, len = arr.length; i < len; i++) {
                     if (arr[i] == value) {
                         return i;
@@ -1280,7 +1350,7 @@
 
                 values = isArray(args[0]) ? args[0] : toArray(args);
 
-                for (i = baseArray.length; i--; ) {
+                for (i = baseArray.length; i--;) {
                     v = _getProperty(baseArray[i], prop);
 
                     if (!!(exclude ^ !(v !== undefined && _softIndexOf(values, v) !== -1))) {
@@ -1300,7 +1370,7 @@
 
                 values = isArray(args[0]) ? args[0] : toArray(args);
 
-                for (i = baseArray.length; i--; ) {
+                for (i = baseArray.length; i--;) {
                     item = baseArray[i];
                     v = _getProperty(item, prop);
 
@@ -1318,7 +1388,7 @@
                     exists,
                     unique = [];
 
-                for (i = baseArray.length; i--; ) {
+                for (i = baseArray.length; i--;) {
                     item = baseArray[i];
 
                     exists = unique.some(function (e) {
@@ -1359,7 +1429,7 @@
 
                     return _filterItems.apply(this, args);
                 },
-
+                
                 /*
                 * Returns the first object in the collection which matches the key:value pair
                 */
@@ -1367,7 +1437,7 @@
                     var baseArray = this._array,
                         i, item, v;
 
-                    for (i = baseArray.length; i--; ) {
+                    for (i = baseArray.length; i--;) {
                         item = baseArray[i];
                         v = _getProperty(item, key);
 
@@ -1378,7 +1448,7 @@
 
                     return null;
                 },
-
+                
                 /*
                 * Returns all objects in the collection which match the key and any of the 
                 * provided values
@@ -1390,7 +1460,7 @@
 
                     return _getAll.apply(this, args);
                 },
-
+            
                 /*
                 * Returns all objects in the collection which do not match the key and any
                 * of the provided values
@@ -1402,11 +1472,11 @@
 
                     return _getAll.apply(this, args);
                 },
-
+            
                 getUnique: function (/* varKeys */) {
                     return _getUnique.apply(this, arguments);
                 },
-
+            
                 /*
                 * Returns the index in the collection of the first match for the key:value pair
                 */
@@ -1422,7 +1492,7 @@
                             return i;
                         }
                     }
-
+                
                     return -1;
                 },
 
@@ -1432,7 +1502,7 @@
                 lastIndexOf: function (/*key, value*/) {
                     // TODO: Implement
                 },
-
+                
                 /*
                 * Moves an item in the collection from one index to another
                 */
@@ -1462,7 +1532,7 @@
                         baseArray = this._array,
                         i, v;
 
-                    for (i = baseArray.length; i--; ) {
+                    for (i = baseArray.length; i--;) {
                         v = _getProperty(baseArray[i], key);
 
                         if (v !== undefined && (!unique || _softIndexOf(values, v) === -1)) {
@@ -1482,7 +1552,7 @@
                         return baseArray.length;
                     } else {
                         // Returns number of objects in the collection matching the key:value pair
-                        for (i = baseArray.length; i--; ) {
+                        for (i = baseArray.length; i--;) {
                             if (_getProperty(baseArray[i], key) == value) {
                                 len++;
                             }
@@ -1491,7 +1561,7 @@
                         return len;
                     }
                 },
-
+                
                 /*
                 * Filters the collection to only contain objects which contain unique values
                 * for any of the provided values
@@ -1535,21 +1605,24 @@
             if (value && !isArray(value)) {
                 throw new TypeError('Invalid data type for ObjectArray initialization value.');
             }
-
+        
             // TODO: Consider implementing more robust type-checking
             // We're making a pretty big assumption at this point that every element in
             // `value` (if provided) is an object. On the other hand, to force type
             // checking every time an ObjectArray is created could produce significant 
             // wasteful overhead. Consider having type checking enabled by default and
             // having an optional flag which can disable this.
-
+        
             this._array = value || [];
-
+        
             return proxy(this, this._array, null, ARRAY_METHODS);
         }
 
         return mdsol.Class(ObjectArray, _prototype).valueOf();
     } ());
+
+/*global namespace*/
+// @DONE (2013-09-17 12:22)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -1559,19 +1632,34 @@
             return mdsol;
         }
 
+        function center($element, parent) {
+            parent = parent ? $element.parent() : $(window);
+
+            $element.css({
+                "position": "absolute",
+                "top": (Math.max(((parent.height() - $element.outerHeight()) / 2) + parent.scrollTop(), 0) + "px"),
+                "left": (Math.max(((parent.width() - $element.outerWidth()) / 2) + parent.scrollLeft(), 0) + "px")
+            });
+
+            return $element;
+        }
+        
         namespace('mdsol.ui', {
+            center: center,
+            
             dispose: dispose
         });
     } ());
-    
-    mdsol.ui.DialogBox = (function () {
 
+
+    mdsol.ui.DialogBox = (function () {
+        
 
         function DialogBox() {
             if (!(this instanceof DialogBox)) {
                 return new DialogBox();
             }
-
+            
             return this;
         }
 
@@ -1580,7 +1668,7 @@
 
 
     mdsol.ui.DialogPage = (function () {
-
+        
 
         function DialogPage() {
             if (!(this instanceof DialogPage)) {
@@ -1595,7 +1683,7 @@
 
 
     mdsol.ui.DialogSubpage = (function () {
-
+        
 
         function DialogSubpage() {
             if (!(this instanceof DialogSubpage)) {
@@ -1610,7 +1698,7 @@
 
 
     mdsol.ui.Dropdown = (function () {
-
+        
 
         function Dropdown() {
             if (!(this instanceof Dropdown)) {
@@ -1625,7 +1713,7 @@
 
 
     mdsol.ui.DropdownMenu = (function () {
-
+        
 
         function DropdownMenu() {
             if (!(this instanceof DropdownMenu)) {
@@ -1640,7 +1728,7 @@
 
 
     mdsol.ui.DropdownSelect = (function () {
-
+        
 
         function DropdownSelect() {
             if (!(this instanceof DropdownSelect)) {
@@ -1655,7 +1743,11 @@
 
 
     mdsol.ui.MessageBox = (function () {
+        
 
+        var _buttonEnum = {
+            OK: 1
+        };
 
         function MessageBox() {
             if (!(this instanceof MessageBox)) {
@@ -1665,134 +1757,12 @@
             return this;
         }
 
+        MessageBox.buttonEnum = _buttonEnum;
+
         return MessageBox;
     } ());
 
-    /*global isPlainObject,isObject,isFunction,isString*/
-
-    mdsol.OptionsBase = (function () {
-        // TODO: Cleanup
-        // There are a number of things about this object I don't like.
-        // For now, as long as it works leave it alone.
-
-        function OptionsBase(obj, options) {
-            var _isInstance = !isPlainObject(obj) && isObject(obj),
-                _isConstructor = !_isInstance && isFunction(obj),
-                _option = function (/* [key] | [key, value] | [object] */) {
-                    var o = this._options,
-                        setter = this._setOption,
-                        key, value, p, ret;
-
-                    if (arguments.length) {
-                        key = arguments[0];
-                        if (isString(key)) {
-                            if (arguments.length > 1) {
-                                value = arguments[1];
-
-                                // If no setter function or it returned false, set the value
-                                if (setter) {
-                                    ret = setter(key, value);
-                                }
-
-                                o[key] = (ret !== undefined) ? ret : value;
-                            } else {
-                                // Getter
-                                if (o[key] !== undefined) {
-                                    return o[key];
-                                } else {
-                                    throw new Error('Invalid option provided: "' + key + '"');
-                                }
-                            }
-                        } else if (isObject(key)) {
-                            // Setter - argument is object of key/value pairs
-                            for (p in key) {
-                                if (key.hasOwnProperty(p)) {
-                                    value = key[p];
-
-                                    // If no setter function or it returned false, set the value
-                                    if (setter) {
-                                        ret = setter(key, value);
-                                    }
-
-                                    o[key] = (ret !== undefined) ? ret : value;
-                                }
-                            }
-                        } else {
-                            // Invalid arguments
-                            throw new Error('Invalid arguments');
-                        }
-                    } else {
-                        // Getter - return all options
-                        return o;
-                    }
-
-                    return this;
-                },
-                _setter = function (key, value) {
-                    return function () {
-                        var setter = this._setOption,
-                            ret;
-
-                        // If no setter function or it returned false, set the value
-                        if (setter) {
-                            ret = setter(key, value);
-                        }
-
-                        this._options[key] = (ret !== undefined) ? ret : value;
-
-                        return this;
-                    };
-                };
-
-            function addToConstructor() {
-                var proto = obj.prototype;
-
-                proto._options = options || {};
-                proto.option = _option;
-
-                if (proto._options.visible !== undefined) {
-                    proto.show = _setter('visible', true);
-                    proto.hide = _setter('visible', false);
-                }
-
-                if (proto._options.enabled !== undefined) {
-                    proto.enable = _setter('enabled', true);
-                    proto.disable = _setter('enabled', false);
-                }
-            }
-
-            function applyDefaultOptions() {
-                var opts, defs, c;
-
-                for (c = obj; c; ) {
-                    if (c.hasOwnProperty('_options')) {
-                        break;
-                    }
-
-                    c = Object.getPrototypeOf(c);
-                }
-
-                if (c) {
-                    opts = c._options || {};
-                    defs = c.constructor.prototype._options || {};
-
-                    obj._options = mdsol.merge(opts, defs, options);
-                }
-            }
-
-            if (_isConstructor) {
-                addToConstructor();
-            } else if (_isInstance) {
-                applyDefaultOptions();
-            }
-
-            return obj;
-        }
-
-        return OptionsBase;
-    } ());
-
-    /*global noop,makeArray,clone,isFunction,isArray,extend*/
+/*global noop,makeArray,clone,isFunction,isArray,extend*/
 
     mdsol.ajax.Method = (function () {
         var BASE_URL = 'http://dlcdkpcs1.ad.mdsol.com/api/Services/',
@@ -1802,255 +1772,332 @@
                 COMPLETED: 0x02,        // The method has completed execution
                 SUCCESS: 0x02 | 0x10,   // The method has completed successfully
                 FAILED: 0x02 | 0x20     // The method has completed with errors
-            },
-            _defaultOptions = {
-                service: null,
-                method: null,
-                params: null,
-                callback: noop,
-                userData: null
             };
 
-        function Method(options) {
-            if (!(this instanceof Method)) {
-                return new Method(options);
+        function service(value) {
+            if (!arguments.length) {
+                return this._service;
             }
 
-            var _self = this,
-                _public = {
-                    status: mdsol.BitFlags(_statusFlags, 'NONE'),
+            this._service = value;
 
-                    execute: function (/*[callback, ][apiParamVal1][, apiParamVal2][, ...] */) {
-                        var a = makeArray(arguments),
-                            o = this.option(),
-                            userData = clone(o),
-                            params = o.params || [],
-                            uri,
-                            paramObj = {},
-                            i, len, data;
+            return this;
+        }
 
-                        // TODO: Refactor
-                        // Move this to the prototype. In order to do that, we need to wrap the
-                        // reference to onCompleted and capture the current value of `this`.
+        function method(value) {
+            if (!arguments.length) {
+                return this._method;
+            }
 
-                        if (a.length && isFunction(a[0])) {
-                            userData.callback = a.shift();
-                        }
+            this._method = value;
 
-                        for (i = 0, len = params.length; i < len; i++) {
-                            paramObj[params[i]] = a[i];
-                        }
+            return this;
+        }
 
-                        uri = BASE_URL + o.service + '.asmx/' + o.method;
-                        data = mdsol.toJson(paramObj);
+        function params() {
+            var value;
 
-                        mdsol.ajax.post(uri, 'JSON', data, onCompleted, userData);
+            if (!arguments.length) {
+                return this._params;
+            }
 
-                        return this;
-                    },
+            if (arguments.length === 1) {
+                value = arguments[0];
+                this._params = value === null ? [] : toArray(value);
+            } else {
+                this._params = makeArray(arguments);
+            }
 
-                    dispose: function () {
-                        // Perform any cleanup
-                        return this;
-                    }
+            return this;
+        }
+
+        function callback(value) {
+            if (!arguments.length) {
+                return this._callback;
+            }
+
+            this._callback = isFunction(value) ? value : null;
+
+            return this;
+        }
+
+        function execute(/*[callback, ][apiParamVal1][, apiParamVal2][, ...] */) {
+            var a = makeArray(arguments),
+                self = this,
+                handler = this._callback,
+                parameters = this._params,
+                paramObj = {},
+                uri, data,
+                i, len;
+
+            if (a.length && isFunction(a[0])) {
+                handler = a.shift();
+            }
+
+            if (parameters.length !== a.length) {
+                throw new Error('Invalid argument count for Method.');
+            }
+
+            for (i = 0, len = parameters.length; i < len; i++) {
+                paramObj[parameters[i]] = a[i];
+            }
+
+            uri = BASE_URL + this._service + '.asmx/' + this._method;
+            data = mdsol.toJson(paramObj);
+
+            mdsol.ajax.post(uri, 'JSON', data, function () {
+                return onCompleted.apply(self, arguments);
+            }, handler);
+
+            return this;
+        }
+
+        function dispose() {
+            // Perform any cleanup
+            return this;
+        }
+
+        function onCompleted(success, data, handler, xhr) {
+            var error = null,
+                buttonEnum = mdsol.ui.MessageBox.buttonEnum,
+                msgboxOptions = {
+                    buttons: buttonEnum.OK,
+                    title: 'An error occured',
+                    visible: true,
+                    autoSize: true
                 };
 
-            function onCompleted(success, data, params, xhr) {
-                var error = null, e,
-                    buttonEnum = mdsol.ui.MessageBox.buttonEnum,
-                    msgboxOptions = {
-                        buttons: buttonEnum.OK,
-                        title: 'An error occured',
-                        visible: true,
-                        autoSize: true
-                    };
+            this.status.value('COMPLETED', success ? 'SUCCESS' : 'FAILED');
 
-                _self.option('status', ['COMPLETED', success ? 'SUCCESS' : 'FAILED']);
+            if (!success) {
+                error = parseServerError(xhr, data);
+            } else {
+                try {
+                    data = mdsol.parseJson(data.d);
+                } catch (err) {
+                    data = null;
+                    success = false;
+                    error = getExceptionError(xhr, err);
+                }
 
                 if (!success) {
-                    error = parseServerError(xhr, data);
+                    msgboxOptions.autoSize = false;
+                } else if (data && isArray(data) && data.length && data[0].error_time) {
+                    error = parseServiceError(xhr, data);
+                }
+
+                if (isFunction(handler)) {
+                    handler(success, data, this);
+                }
+            }
+
+            if (error) {
+                msgboxOptions.text = error;
+                mdsol.ui.MessageBox(msgboxOptions);
+            }
+
+            return true;
+        }
+
+        function errorLine(name, message, rawText) {
+            var line = '<div><span style="width: 100px; display: inline-block; font-weight: bold;">' +
+                name + '</span>';
+
+            if (rawText) {
+                return line + '</div><br /><pre>' + message + '</pre><br />';
+            }
+
+            return line + message + '</div>';
+        }
+
+        function parseServiceError(xhr, data) {
+            var message = '',
+                i, len, item;
+
+            message += 'The following errors occured while proccessing a request:<br /><br />' +
+                errorLine('URL:', xhr.url) + '<br />';
+
+            for (i = 0, len = data.length; i < len; i++) {
+                item = data[i];
+
+                if (item.error_time && item.message) {
+                    message += errorLine('Time:', item.error_time) + errorLine('Message:', item.message) + '<br />';
+                }
+            }
+
+            return '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' + message + '</div>';
+        }
+
+        function parseServerError(xhr, data) {
+            var message, a, b, item;
+
+            message = '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' +
+                data.statusText + '<br /><br />' +
+                errorLine('URL:', xhr.url) + '<br />';
+
+            try {
+                if (data.responseText.substring(0, '<!DOCTYPE html>'.length) === '<!DOCTYPE html>') {
+                    a = data.responseText.indexOf('<!--') + '<!--'.length;
+                    b = data.responseText.indexOf('-->', a);
+                    message += errorLine('Response:', data.responseText.substr(a, b), true);
                 } else {
-                    try {
-                        data = mdsol.parseJson(data.d);
-                    } catch (err) {
-                        data = null;
-                        success = false;
-                        error = getExceptionError(xhr, err);
-                    }
+                    // TODO: Move away from the evil eval
+                    data = eval('[' + data.responseText.replace(/\\r/g, '\\\\r').replace(/\\n/g, '\\\\n') + ']');
 
-                    if (!success) {
-                        msgboxOptions.autoSize = false;
-                    } else if (data && isArray(data) && data.length && data[0].error_time) {
-                        error = parseServiceError(xhr, data);
-                    } else {
-                        e = $.Event(this.eventName, { xhrMethod: _self, params: params });
-                        if (this.callback) {
-                            this.callback(e, success, data);
-                        }
-                    }
-                }
-
-                if (error) {
-                    msgboxOptions.text = error;
-                    mdsol.ui.MessageBox(msgboxOptions);
-                }
-
-                return true;
-            }
-
-            function errorLine(name, message, rawText) {
-                var line = '<div><span style="width: 100px; display: inline-block; font-weight: bold;">' +
-                        name + '</span>';
-
-                if (rawText) {
-                    return line + '</div><br /><pre>' + message + '</pre><br />';
-                }
-
-                return line + message + '</div>';
-            }
-
-            function parseServiceError(xhr, data) {
-                var message = '',
-                    i, len, item;
-
-                message += 'The following errors occured while proccessing a request:<br /><br />' +
-                    errorLine('URL:', xhr.url) + '<br />';
-
-                for (i = 0, len = data.length; i < len; i++) {
-                    item = data[i];
-
-                    if (item.error_time && item.message) {
-                        message += errorLine('Time:', item.error_time) + errorLine('Message:', item.message) + '<br />';
-                    }
-                }
-
-                return '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' + message + '</div>';
-            }
-
-            function parseServerError(xhr, data) {
-                var message, a, b, item;
-
-                message = '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' +
-                    data.statusText + '<br /><br />' +
-                    errorLine('URL:', xhr.url) + '<br />';
-
-                try {
-                    if (data.responseText.substring(0, '<!DOCTYPE html>'.length) === '<!DOCTYPE html>') {
-                        a = data.responseText.indexOf('<!--') + '<!--'.length;
-                        b = data.responseText.indexOf('-->', a);
-                        message += errorLine('Response:', data.responseText.substr(a, b), true);
-                    } else {
-                        // TODO: Move away from the evil eval
-                        data = eval('[' + data.responseText.replace(/\\r/g, '\\\\r').replace(/\\n/g, '\\\\n') + ']');
-
-                        for (item in data[0]) {
-                            if (data[0].hasOwnProperty(item)) {
-                                a = data[0][item];
-                                if (a.indexOf('\\r') !== -1 || a.indexOf('\\n') !== -1) {
-                                    a = a.replace(/\\r/g, '\r').replace(/\\n/g, '\n');
-                                    message += errorLine(item, a, true);
-                                } else {
-                                    message += errorLine(item, a);
-                                }
+                    for (item in data[0]) {
+                        if (data[0].hasOwnProperty(item)) {
+                            a = data[0][item];
+                            if (a.indexOf('\\r') !== -1 || a.indexOf('\\n') !== -1) {
+                                a = a.replace(/\\r/g, '\r').replace(/\\n/g, '\n');
+                                message += errorLine(item, a, true);
+                            } else {
+                                message += errorLine(item, a);
                             }
                         }
                     }
-
-                    message += '<br /></div>';
-                } catch (err) {
-                    message += errorLine('Response:', data);
                 }
 
-                return message;
+                message += '<br /></div>';
+            } catch (err) {
+                message += errorLine('Response:', data);
             }
 
-            function getExceptionError(xhr, error) {
-                return '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' +
-                    'Failed to parse data from server!<br /><br />' +
-                    errorLine('URL:', xhr.url) + '<br />' +
-                    errorLine('Message:', error) + '<br /></div>';
+            return message;
+        }
+
+        function getExceptionError(xhr, error) {
+            return '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' +
+                'Failed to parse data from server!<br /><br />' +
+                errorLine('URL:', xhr.url) + '<br />' +
+                errorLine('Message:', error) + '<br /></div>';
+        }
+
+        function Method(serviceName, methodName, parameters) {
+            if (!(this instanceof Method)) {
+                return new Method(serviceName, methodName, parameters);
             }
 
-            // TODO: Cleanup
-            // Something needs to be changed about this. Not sure if it just the name,
-            // but its not clear what is being done
-            mdsol.OptionsBase(this, options);
+            return extend(this, {
+                _service: serviceName || null,
 
-            return extend(this, _public);
+                _method: methodName || null,
+
+                _params: toArray(parameters) || [],
+
+                _callback: noop,
+
+                status: mdsol.BitFlags(_statusFlags, 'NONE')
+            });
         }
 
         Method.statusFlags = _statusFlags;
 
-        // TODO: Cleanup
-        // Something needs to be changed about this. Not sure if it just the name,
-        // but its not clear what is being done
-        mdsol.OptionsBase(Method, _defaultOptions);
+        return mdsol.Class(Method, {
+            service: service,
 
-        return Method;
+            method: method,
+
+            params: params,
+
+            callback: callback,
+
+            execute: execute,
+
+            dispose: dispose
+        }).valueOf();
     } ());
 
-    /*global merge,toArray,makeArray*/
+/*global merge,toArray,makeArray*/
 
     mdsol.ajax.RequestMethod = (function () {
-        var DEFAULT_PARAMS = ['audit_info', 'field_filter'],
-            _defaultOptions = merge(mdsol.ajax.Method.defaultOptions, { fields: [], audit: false });
+        var DEFAULT_PARAMS = ['audit_info', 'field_filter'];
 
-        function RequestMethod(options) {
+        function RequestMethod(service, method, params) {
             if (!(this instanceof RequestMethod)) {
-                return new RequestMethod(options);
+                return new RequestMethod(service, method, params);
             }
 
-            function createOptions(defaultOptions, o) {
-                var params = o ? toArray(o.params) : [],
-                    results = merge(_defaultOptions, o || {}, { params: params });
+            var _audit = false,
+                _fields = [],
+                _public = {
+                    audit: function (value) {
+                        if (!arguments.length) {
+                            return _audit;
+                        }
 
-                push.apply(results.params, DEFAULT_PARAMS);
+                        _audit = !!value;
 
-                return results;
-            }
+                        return this;
+                    },
 
-            function createArguments(that, method, args) {
-                var audit = that.option('audit'),
-                    fields = that.options('fields'),
-                    newArgs = [that, 'execute'];
+                    fields: function (/* varArgs */) {
+                        var value;
 
-                // Major performance boost (see http://jsperf.com/arrayconcatvsarraypushapply)
-                push.apply(newArgs, args);
-                push.apply(newArgs, [audit ? 'y' : 'n', fields.join(',')]);
+                        if (!arguments.length) {
+                            return _fields;
+                        }
 
-                return newArgs;
-            }
+                        if (arguments.length === 1) {
+                            value = arguments[0];
+                            _fields = value === null ? [] : toArray(value);
+                        } else {
+                            _fields = makeArray(arguments);
+                        }
 
-            var _public = {
-                _setOption: function (key, value) {
-                    if (key === 'fields') {
-                        return toArray(value);
+                        return this;
+                    },
+
+                    params: function () {
+                        var curParams, value,
+                            args = [this];
+
+                        if (!arguments.length) {
+                            curParams = mdsol.Class.base(this);
+
+                            // Get params from base; exclude defaul parameters
+                            return curParams.filter(function (el/*, idx, arr*/) {
+                                return DEFAULT_PARAMS.indexOf(el) === -1;
+                            });
+                        }
+
+                        if (arguments.length === 1) {
+                            value = arguments[0];
+                            if (value !== null) {
+                                push.apply(args, toArray(value));
+                            }
+                        } else {
+                            push.apply(args, arguments);
+                        }
+
+                        push.apply(args, DEFAULT_PARAMS);
+
+                        return mdsol.Class.base.apply(this, args);
+                    },
+
+                    execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
+                        var args = [this];
+
+                        push.apply(args, arguments);
+                        push.apply(args, [_audit ? 'y' : 'n', _fields.join(',')]);
+
+                        return mdsol.Class.base.apply(this, args);
+                    },
+
+                    dispose: function () {
+                        // Perform any cleanup
                     }
-
-                    return undefined;
-                },
-
-                execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
-                    var a = createArguments(this, 'execute', makeArray(arguments));
-
-                    return mdsol.Class.base.apply(this, a);
-                },
-
-                dispose: function () {
-                    // Perform any cleanup
-                }
-            };
+                };
 
             return mdsol.Class(this, _public)
-                .base(createOptions(_defaultOptions, options))
+                .base(service, method, toArray(params).concat(DEFAULT_PARAMS))
                 .valueOf();
         }
 
         return mdsol.Class(RequestMethod).inherits(mdsol.ajax.Method).valueOf();
     } ());
 
-    /*global namespace,extend*/
-    // @DONE (2013-09-17 11:11)
+/*global namespace,extend*/
+// @DONE (2013-09-17 11:11)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -2066,47 +2113,67 @@
         });
     } ());
 
-    /*global clone,isFunction,toArray*/
-
-    // NOTE: This requires mdsol.session, which is not yet implemented
+/*global clone,isFunction,toArray*/
 
     mdsol.ajax.UpsertMethod = (function () {
         var DEFAULT_PARAMS = ['session_id', 'field_data'];
 
-        function UpsertMethod(options) {
+        function UpsertMethod(service, method, params) {
             if (!(this instanceof UpsertMethod)) {
-                return new UpsertMethod(options);
+                return new UpsertMethod(service, method, params);
             }
 
-            var _options = clone(options),
-                _public = {
-                    execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
-                        // TODO: Check that we are correctly referencing the session ID
-                        var token = mdsol.session.dbUser.session_id,
-                            fieldData = '', newArgs = [this, 'execute'];
+            var _public = {
+                params: function () {
+                    var curParams, value,
+                        args = [this];
 
-                        if (arguments.length && !isFunction(arguments[0])) {
-                            fieldData = arguments[0];
-                            push.apply(newArgs, arguments);
-                        }
+                    if (!arguments.length) {
+                        curParams = mdsol.Class.base(this);
 
-                        // Major performance boost (see http://jsperf.com/arrayconcatvsarraypushapply)
-                        push.apply(newArgs, [token, fieldData]);
-
-                        return mdsol.Class.base.apply(this, newArgs);
-                    },
-
-                    dispose: function () {
-                        // Perform any cleanup
+                        // Get params from base; exclude defaul parameters
+                        return curParams.filter(function (el/*, idx, arr*/) {
+                            return DEFAULT_PARAMS.indexOf(el) === -1;
+                        });
                     }
-                };
 
-            // Force option 'params' to an array and add the default request parameters
-            _options.params = toArray(_options.params);
-            push.apply(_options.params, DEFAULT_PARAMS);
+                    if (arguments.length === 1) {
+                        value = arguments[0];
+                        if (value !== null) {
+                            push.apply(args, toArray(value));
+                        }
+                    } else {
+                        push.apply(args, arguments);
+                    }
+
+                    push.apply(args, DEFAULT_PARAMS);
+
+                    return mdsol.Class.base.apply(this, args);
+                },
+
+                execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
+                    // TODO: Check that we are correctly referencing the session ID
+                    var token = mdsol.session.dbUser.session_id,
+                        fieldData = '',
+                        args = [this];
+
+                    if (arguments.length && !isFunction(arguments[0])) {
+                        fieldData = arguments[0];
+                        push.apply(args, arguments);
+                    }
+
+                    push.apply(args, [token, fieldData]);
+
+                    return mdsol.Class.base.apply(this, args);
+                },
+
+                dispose: function () {
+                    // Perform any cleanup
+                }
+            };
 
             return mdsol.Class(this, _public)
-                .base(_options)
+                .base(service, method, toArray(params).concat(DEFAULT_PARAMS))
                 .valueOf();
         }
 
@@ -2115,9 +2182,8 @@
             .valueOf();
     } ());
 
-
-    /*global namespace,extend*/
-    // @DONE (2013-09-17 11:11)
+/*global namespace,extend*/
+// @DONE (2013-09-17 11:11)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -2126,7 +2192,7 @@
         function clear() {
             return mdsol;
         }
-
+        
         function dispose() {
             return mdsol;
         }
@@ -2140,7 +2206,7 @@
 
 
     mdsol.schema.Field = (function () {
-
+        
 
         function Field() {
             if (!(this instanceof Field)) {
@@ -2154,8 +2220,14 @@
     } ());
 
 
-    mdsol.schema.Table = (function () {
+    (function () {
+        
+        
+    } ());
 
+
+    mdsol.schema.Table = (function () {
+        
 
         function Table() {
             if (!(this instanceof Table)) {
@@ -2169,13 +2241,292 @@
     } ());
 
 
-    (function () {
+    mdsol.schema.TitleBar = (function () {
+        
 
+        function TitleBar() {
+            if (!(this instanceof TitleBar)) {
+                return new TitleBar();
+            }
 
+            return this;
+        }
+
+        return TitleBar;
     } ());
 
-    /*global namespace,extend*/
-    // @DONE (2013-09-17 11:10)
+/*global isEmpty,isFunction,namespace,extend*/
+
+    /*
+    * Use IIFE to prevent cluttering of globals
+    */
+    (function () {
+        function dispose() {
+
+        }
+        
+        // Expose public members
+        namespace('mdsol.data', {
+            dispose: dispose
+        });
+    } ());
+
+
+    mdsol.data.RemoteData = (function () {
+        function RemoteData(dataTemplate, dataMethods, loadMethod, saveMethod) {
+            if (!(this instanceof RemoteData)) {
+                return new RemoteData(dataTemplate, dataMethods, loadMethod, saveMethod);
+            }
+
+            var _template = dataTemplate,
+                _methods = dataMethods,
+                _loadMethod = loadMethod,
+                _saveMethod = saveMethod;
+
+            function template(value) {
+                if (!arguments.length) {
+                    return _template;
+                }
+
+                _template = value;
+
+                return mdsol;
+            }
+
+            function methods(value) {
+                if (!arguments.length) {
+                    return _methods;
+                }
+
+                _methods = value;
+
+                return mdsol;
+            }
+
+            function load() {
+
+            }
+
+            function save() {
+
+            }
+
+            function getMethod() {
+
+            }
+
+            function dispose() {
+
+            }
+
+            return mdsol.Class(extend(this, {
+                template: template,
+
+                methods: methods,
+
+                load: load,
+
+                save: save,
+
+                getMethod: getMethod,
+
+                dispose: dispose
+            })).base().valueOf();
+        }
+
+        return mdsol.Class(RemoteData).inherits(mdsol.ObjectArray).valueOf();
+    } ());
+
+/*global merge,toArray,makeArray*/
+
+    mdsol.data.clients = (function () {
+        var SERVICE = 'Clients',
+            TEMPLATE = {
+                id: 0,
+                name: '',
+                abbreviation: null,
+                internal: 'N',
+                active: 'Y'
+            },
+            _methods = {
+                getClients: mdsol.ajax.RequestMethod(SERVICE, 'GetClients')
+                    .fields(keys(TEMPLATE)),
+                upsertClients: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertClients')
+            };
+
+        return mdsol.data.RemoteData(TEMPLATE, _methods, 'getClients', 'upsertClients');
+    } ());
+
+ mdsol.data.fields = (function () {
+        var SERVICE = 'Fields',
+            TEMPLATE = {
+                id: 0,
+                table_id: 0,
+                name: '',
+                datatype_id: 0,
+                key_type: null,
+                nullable: 'N',
+                default_value: null,
+                comments: null,
+                deprecated: 'N',
+                mainstream: 'Y',
+                active: 'Y'
+            },
+            _request = mdsol.ajax.RequestMethod,
+            _keyFields = [
+                'id',
+                'table_id', 
+                'name',
+                'key_type', 
+                'active',
+                'pk', 
+                'fk'
+            ],
+            _maxFields = keys(TEMPLATE).concat('datatype_name'),
+            _methods = {
+                getKeyFieldsByTableId: _request(SERVICE, 'GetKeyFieldsByTableId')
+                    .params('site_id', 'table_ids')
+                    .fields(_keyFields),
+                getFieldsByTableId: _request('Fields', 'GetFieldsByTableId')
+                    .params('site_id', 'table_ids')
+                    .fields(_maxFields),
+                getAllKeysByTableId: _request('ForeignKeys', 'GetAllKeysByTableId')
+                    .params('site_id', 'table_id')
+                    .fields(_maxFields),
+                upsertFields: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertFields')
+            };
+
+        return mdsol.data.RemoteData(TEMPLATE, _methods, 'getKeyFieldsByTableId', 'upsertFields');
+    } ());
+
+/*global merge,toArray,makeArray*/
+
+    mdsol.data.products = (function () {
+        var SERVICE = 'Products',
+            TEMPLATE = {
+                id: 0,
+                name: '',
+                internal_client_id: null,
+                enabled: 'Y',
+                active: 'Y'
+            },
+            _methods = {
+                getProducts: mdsol.ajax.RequestMethod(SERVICE, 'GetProducts')
+                    .fields(keys(TEMPLATE)),
+                upsertProducts: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertProducts')
+            };
+
+        return mdsol.data.RemoteData(TEMPLATE, _methods, 'getProducts', 'upsertProducts');
+    } ());
+
+/*global merge,toArray,makeArray*/
+
+    mdsol.data.sites = (function () {
+        var SERVICE = 'Sites',
+            TEMPLATE = {
+                id: 0,
+                product_id: 0,
+                client_id: 0,
+                environment_code: '10',
+                environment_order: 0,
+                project: null,
+                url: null,
+                schema_version: null,
+                database_name: null,
+                import_profile_id: null,
+                active: 'Y'
+            },
+            _request = mdsol.ajax.RequestMethod,
+            _minFields = [
+                'id',
+                'client_id', 
+                'client_name', 
+                'abbreviation', 
+                'project', 
+                'environment_code',
+                'environment_order', 
+                'product_id', 
+                'environment'
+            ],
+            _serviceSitesFields = [
+                'id', 
+                'site_id', 
+                'client_id', 
+                'client_name',
+                'environment', 
+                'active'
+            ],
+            _maxFields = keys(TEMPLATE).concat('client_name', 'abbreviation', 'project'),
+            _methods = {
+                getSites: _request(SERVICE, 'GetSites')
+                    .fields(_minFields),
+                getSitesByProductId: _request(SERVICE, 'GetSitesByProductId', 'product_id')
+                    .fields(_minFields),
+                getSitesByEnvironment: _request(SERVICE, 'GetSitesByEnvironment')
+                    .params('product_id', 'environment_code', 'environment_order')
+                    .fields(_minFields),
+                getUsageSitesByTableId: _request(SERVICE, 'GetUsageSitesByTableId')
+                    .params('environment_code', 'environment_order', 'table_id'),
+                getSitesByServiceId: _request(SERVICE, 'GetSitesByServiceId')
+                    .params('environment_code', 'environment_order', 'service_id')
+                    .fields(_serviceSitesFields),
+                getSitesByClientId: _request(SERVICE, 'GetSitesByClientId', 'client_id')
+                    .fields(_maxFields),
+                encryptSiteCredentials: mdsol.ajax.Method(SERVICE, 'EncryptSiteCredentials')
+                    .params('username', 'password'),
+                upsertSites: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertSites'),
+                upsertServiceSites: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertServiceSites')
+            };
+
+        return mdsol.data.RemoteData(TEMPLATE, _methods, 'getSitesByProductId', 'upsertSites');
+    } ());
+
+/*global merge,toArray,makeArray*/
+
+    mdsol.data.tables = (function () {
+        var SERVICE = 'Tables',
+            TEMPLATE = {
+                id: 0,
+                product_id: 0,
+                name: '',
+                friendly_name: '',
+                comments: '',
+                mainstream: 'Y',
+                active: 'Y'
+            },
+            _request = mdsol.ajax.RequestMethod,
+            _minFields = [
+                'id', 
+                'name', 
+                'friendly_name',
+                'active'],
+            _usageFields = [
+                'client_id',
+                'client_name',
+                'client_abbreviation',
+                'site_id',
+                'product_id',
+                'environment_display',
+                'environment_order',
+                'table_id',
+                'table_name', 
+                'rows'],
+            _methods = {
+                getTablesBySiteId: _request(SERVICE, 'GetTablesBySiteId', 'site_id')
+                    .fields(_minFields),
+                getTablesByProductId: _request(SERVICE, 'GetTablesByProductId', 'product_id')
+                    .fields(_minFields),
+                getTableUsage: _request(SERVICE, 'GetTableUsage')
+                    .params('site_id', 'environment_display', 'table_id')
+                    .fields(_usageFields),
+                upsertTables: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertTables')
+            };
+
+        return mdsol.data.RemoteData(TEMPLATE, _methods, 'getTablesBySiteId', 'upsertTables');
+    } ());
+
+/*global namespace,extend*/
+// @DONE (2013-09-17 11:10)
 
     /*
     * Use IIFE to prevent cluttering of globals
@@ -2194,8 +2545,10 @@
         });
     } ());
 
-    // @DONE (2013-09-16 21:12)
+// @DONE (2013-09-16 21:12)
 
 
-    // @DONE (2013-09-17 08:00)
-} (jQuery));
+    // Expose mdsol library
+    return (window.mdsol = mdsol);
+// @DONE (2013-09-17 12:03)
+}(jQuery));

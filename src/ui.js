@@ -11,7 +11,21 @@ define([
             return mdsol;
         }
 
+        function center($element, parent) {
+            parent = parent ? $element.parent() : $(window);
+
+            $element.css({
+                "position": "absolute",
+                "top": (Math.max(((parent.height() - $element.outerHeight()) / 2) + parent.scrollTop(), 0) + "px"),
+                "left": (Math.max(((parent.width() - $element.outerWidth()) / 2) + parent.scrollLeft(), 0) + "px")
+            });
+
+            return $element;
+        }
+        
         namespace('mdsol.ui', {
+            center: center,
+            
             dispose: dispose
         });
     } ());

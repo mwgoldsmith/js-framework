@@ -25,6 +25,11 @@ define([
     './schema/Link',
     './schema/Table',
     './schema/TitleBar',
+    './data/Clients',
+    './data/Fields',
+    './data/Products',
+    './data/Sites',
+    './data/Tables',
     './session',
     './toolbar'
 ], function (mdsol) {

@@ -36,10 +36,10 @@ define([
         return ns;
     }
 
-    function error (msg) {
+    function error(msg) {
         throw new Error(msg);
     }
-    
+
     /*
     * Checks if the provided object is a string.
     */
@@ -160,7 +160,7 @@ define([
             i;
 
         // Copy the property if it is not a native prototype method
-        for (i = methods.length; i--;) {
+        for (i = methods.length; i--; ) {
             m = methods[i];
             if (org[m] !== nativeProto[m]) {
                 tgt[m] = org[m];
@@ -315,19 +315,19 @@ define([
 
     function proxy(obj, target, callback, methods) {
         var nativeProto = natives[toString.call(target)],
-            override;
+            available = Object.getOwnPropertyNames(nativeProto),
+            override, i;
 
-        for (override in nativeProto) {
-            if (nativeProto.hasOwnProperty(override)
-                && isFunction(nativeProto[override])
-                && (!methods.length || methods.indexOf(override) !== -1)
-                && target[override] === undefined) {
+        for (i = available.length; i--; ) {
+            override = available[i];
+            if ((!methods.length || methods.indexOf(override) !== -1)
+                && !target.hasOwnProperty(override)) {
                 /*
                 * Create native method on `target` which will call `callback` if provided;
                 * otherwise, the call will be applied directly to `target`. Prevent
                 * clobber of existing methods if present.
                 */
-                target[override] = (function (that, tgt, c, nativeMethod) {
+                obj[override] = (function (that, tgt, c, nativeMethod) {
                     return c
                         ? function () {
                             return c.call(that, tgt, override, nativeMethod);
