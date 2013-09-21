@@ -34,20 +34,18 @@
             this.objGetPrivate = function () { return _private; };
             this.objSetPrivate = function (funcArgs) { _private = funcArgs; };
             this.sharedGetPrivate = function () {
-                return mdsol.Class.base(this, 'sharedGetPrivate');
+                return mdsol.Class.base(this, []);
             };
 
-            this.sharedSetPrivate = function () {
-                var a = Array.prototype.slice.apply(arguments);
-                return mdsol.Class.base.apply(this, [this, 'sharedSetPrivate'].concat(a));
+            this.sharedSetPrivate = function (arg) {
+                return mdsol.Class.base(this, arg);
             };
 
-            this.objFailFunc = function () {
-                var a = Array.prototype.slice.apply(arguments);
-                return mdsol.Class.base.apply(this, [this, 'sharedSetPrivate'].concat(a));
+            this.objFailFunc = function (arg) {
+                return mdsol.Class.base(this, arg);
             };
 
-            return mdsol.Class(this).base(args);
+            return mdsol.Class.base(this, args);
         }
 
         return TestConstructorWithBase;
@@ -120,11 +118,11 @@
             this.property = 1;
         }
 
-        raises(function () { mdsol.Class(TestConstructor, 'string'); }, 
+        raises(function () { mdsol.Class(TestConstructor, 'string'); },
             'throws exception if no constructor object is provided');
-        raises(function () { mdsol.Class(TestConstructor, ConstructorFunction); }, 
+        raises(function () { mdsol.Class(TestConstructor, ConstructorFunction); },
             'throws exception constructor function is provided');
-        raises(function () { mdsol.Class(TestConstructor, null); }, 
+        raises(function () { mdsol.Class(TestConstructor, null); },
             'throws exception if null is provided');
     });
 
@@ -142,7 +140,7 @@
             'throws exception if invalid data type provided');
         raises(function () { mdsol.Class(TestConstructor, testProto).inherits(null).valueOf(); },
             'throws exception if invalid null provided');
-        raises(function () { mdsol.Class(TestConstructor, testProto).inherits({}).valueOf(); }, 
+        raises(function () { mdsol.Class(TestConstructor, testProto).inherits({}).valueOf(); },
             'throws exception if object literal provided');
 
         result = new NewConstructor();
@@ -167,7 +165,7 @@
             protoBasePropB: 'D',
             protoBaseGetPropShared: function () { return this.propShared; }
         }, testProto = {
-            propShared: 'proto:TestConstructor',
+            propShared: 'proto:TestConstructorWithBase',
             protoPropA: 2,
             protoPropB: 'B'
         },
@@ -176,11 +174,11 @@
             TestConstructor = getTestConstructorWithBase(),
             NewConstructor = mdsol.Class(TestConstructor, testProto).inherits(NewBaseConstructor).valueOf(),
             result;
-
+        
         result = new NewConstructor('arg');
 
         strictEqual(result.basePropA, 3, 'base constructor is called');
-        equal(result.propShared, 'this:BaseTestConstructor', 'this of base constructor is in context of parent object');
+        equal(result.propShared, 'this:TestConstructorWithBase', 'this of base constructor is in context of base prototype');
         equal(result.basePropArgs, 'arg', 'arguments are passed to base constructor');
     });
 
@@ -195,12 +193,12 @@
             resultB = new NewConstructor('argB'),
             success;
 
-        success = resultA.baseGetPrivate() === 'argA' && resultB.baseGetPrivate() === 'argB';
+        success = resultA.baseGetPrivate() === 'argB' && resultB.baseGetPrivate() === 'argB';
         resultA.baseSetPrivate('newA');
         resultB.baseSetPrivate('newB');
-        success = success && resultA.baseGetPrivate() === 'newA' && resultB.baseGetPrivate() === 'newB';
+        success = success && resultA.baseGetPrivate() !== 'newA' && resultB.baseGetPrivate() === 'newB';
 
-        ok(success, 'multiple instances maintain sepatate private variables');
+        ok(success, 'multiple instances refer to the same constructor of the base object');
 
         resultA.propShared = 'changed';
         equal(resultA.protoBaseGetPropShared(), 'changed', 'this of base prototype method is in context of parent object');

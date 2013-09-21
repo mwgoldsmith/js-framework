@@ -1,6 +1,5 @@
 /*global module,test,raises,ok,deepEqual*/
 (function (mdsol) {
-
     function getTestObj() {
         return {
             A: 1,
@@ -40,19 +39,19 @@
     test('current enum value has default value of null', function () {
         var e = createTestEnum();
 
-        deepEqual(e.value(), null, 'value is null if it has not been set');
+        strictEqual(e.value(), null, 'value is null if it has not been set');
     });
 
     test('constructor can initialize current value by enum name / value() returns the current enum value', function () {
         var e = createTestEnum('B');
 
-        deepEqual(e.value(), 2, 'created with an initial value by name');
+        strictEqual(e.value(), 2, 'created with an initial value by name');
     });
 
     test('constructor can initialize current value by enum value / value() returns the current enum value', function () {
         var e = createTestEnum(2);
 
-        deepEqual(e.value(), 2, 'created with an initial value by value');
+        strictEqual(e.value(), 2, 'created with an initial value by value');
     });
 
     test('constructor does not permit an invalid enum name or value to initizialize the current enum value', function () {
@@ -63,15 +62,16 @@
 
     test('valueOf() returns enum object', function () {
         var e = createTestEnum(),
-            obj = getTestObj();
-
-        deepEqual(e.valueOf(), obj, 'original enum object can be retreived');
+            obj = getTestObj(),
+            result = e.valueOf();
+        
+        deepEqual(result, obj, 'original enum object can be retreived');
     });
 
     test('toString() returns name of current enum value', function () {
         var e = createTestEnum(1);
 
-        deepEqual(e.toString(), 'A', 'name of current enum value can be retreived');
+        strictEqual(e.toString(), 'A', 'name of current enum value can be retreived');
     });
 
     test('value() can set the current enum value by a given enum name', function () {
@@ -79,7 +79,7 @@
 
         e.value('A');
 
-        deepEqual(e.value(), 1, 'current enum value can be set by name');
+        strictEqual(e.value(), 1, 'current enum value can be set by name');
     });
 
     test('value() can set the current enum value by a given enum value', function () {
@@ -87,7 +87,7 @@
 
         e.value(1);
 
-        deepEqual(e.value(), 1, 'current enum value can be set by value');
+        strictEqual(e.value(), 1, 'current enum value can be set by value');
     });
 
     test('value() can set the current enum value to null', function () {
@@ -95,7 +95,7 @@
 
         e.value(null);
 
-        deepEqual(e.value(), null, 'current enum value can be set to null');
+        strictEqual(e.value(), null, 'current enum value can be set to null');
     });
 
     test('value() does not permit an invalid enum name or value to be set', function () {
@@ -116,4 +116,4 @@
         raises(function () { e.test('ELEVENTEEN'); }, 'throws exception when trying to match invalid name ');
     });
 
-}(window.mdsol));
+} (window.mdsol));
