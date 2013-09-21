@@ -6,57 +6,86 @@ define([
     '../core/Class'
 ], function (mdsol, push) {
     mdsol.ajax.RequestMethod = (function () {
-        var DEFAULT_PARAMS = ['audit_info', 'field_filter'],
-            _defaultOptions = merge(mdsol.ajax.Method.defaultOptions, { fields: [], audit: false });
+        var DEFAULT_PARAMS = ['audit_info', 'field_filter'];
 
-        function RequestMethod(options) {
+        function RequestMethod(service, method, params) {
             if (!(this instanceof RequestMethod)) {
-                return new RequestMethod(options);
+                return new RequestMethod(service, method, params);
             }
 
-            function createOptions(defaultOptions, o) {
-                var params = o ? toArray(o.params) : [],
-                    results = merge(_defaultOptions, o || {}, { params: params });
+            var _audit = false,
+                _fields = [],
+                _public = {
+                    audit: function (value) {
+                        if (!arguments.length) {
+                            return _audit;
+                        }
 
-                push.apply(results.params, DEFAULT_PARAMS);
+                        _audit = !!value;
 
-                return results;
-            }
+                        return this;
+                    },
 
-            function createArguments(that, method, args) {
-                var audit = that.option('audit'),
-                    fields = that.options('fields'),
-                    newArgs = [that, 'execute'];
-                
-                // Major performance boost (see http://jsperf.com/arrayconcatvsarraypushapply)
-                push.apply(newArgs, args);
-                push.apply(newArgs, [audit ? 'y' : 'n', fields.join(',')]);
+                    fields: function (/* varArgs */) {
+                        var value;
 
-                return newArgs;
-            }
+                        if (!arguments.length) {
+                            return _fields;
+                        }
 
-            var _public = {
-                _setOption: function (key, value) {
-                    if (key === 'fields') {
-                        return toArray(value);
+                        if (arguments.length === 1) {
+                            value = arguments[0];
+                            _fields = value === null ? [] : toArray(value);
+                        } else {
+                            _fields = makeArray(arguments);
+                        }
+
+                        return this;
+                    },
+
+                    params: function () {
+                        var curParams, value,
+                            args = [this];
+
+                        if (!arguments.length) {
+                            curParams = mdsol.Class.base(this);
+
+                            // Get params from base; exclude defaul parameters
+                            return curParams.filter(function (el/*, idx, arr*/) {
+                                return DEFAULT_PARAMS.indexOf(el) === -1;
+                            });
+                        }
+
+                        if (arguments.length === 1) {
+                            value = arguments[0];
+                            if (value !== null) {
+                                push.apply(args, toArray(value));
+                            }
+                        } else {
+                            push.apply(args, arguments);
+                        }
+
+                        push.apply(args, DEFAULT_PARAMS);
+
+                        return mdsol.Class.base.apply(this, args);
+                    },
+
+                    execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
+                        var args = [this];
+
+                        push.apply(args, arguments);
+                        push.apply(args, [_audit ? 'y' : 'n', _fields.join(',')]);
+
+                        return mdsol.Class.base.apply(this, args);
+                    },
+
+                    dispose: function () {
+                        // Perform any cleanup
                     }
-
-                    return undefined;
-                },
-
-                execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
-                    var a = createArguments(this, 'execute', makeArray(arguments));
-
-                    return mdsol.Class.base.apply(this, a);
-                },
-
-                dispose: function () {
-                    // Perform any cleanup
-                }
-            };
+                };
 
             return mdsol.Class(this, _public)
-                .base(createOptions(_defaultOptions, options))
+                .base(service, method, toArray(params).concat(DEFAULT_PARAMS))
                 .valueOf();
         }
 

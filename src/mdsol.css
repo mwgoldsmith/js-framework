@@ -1,0 +1,24 @@
+﻿#ajax_progress {
+	position:         absolute;
+	border:           1px solid #444;
+	font-size:        12px;
+	font-family:      'lucida grande',tahoma,verdana,arial,sans-serif;
+	width:            225px;
+	height:           48px;
+	background-color: white;
+	color:            #444;
+	padding-left:     8px;
+	z-index: 110;
+}
+
+#ajax_progress span {
+	line-height:  48px;
+}
+
+#ajax_progress img {
+	position: absolute;
+	width:    16px;
+	height:   16px;
+	right:    8px;
+	top:      16px;
+}

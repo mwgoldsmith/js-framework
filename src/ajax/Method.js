@@ -3,7 +3,6 @@ define([
     '../core',
     '../ajax',
     '../core/BitFlags',
-    '../core/OptionsBase',
     '../ui/MessageBox'
 ], function (mdsol) {
     mdsol.ajax.Method = (function () {
@@ -14,190 +13,238 @@ define([
                 COMPLETED: 0x02,        // The method has completed execution
                 SUCCESS: 0x02 | 0x10,   // The method has completed successfully
                 FAILED: 0x02 | 0x20     // The method has completed with errors
-            },
-            _defaultOptions = {
-                service: null,
-                method: null,
-                params: null,
-                callback: noop,
-                userData: null
             };
 
-        function Method(options) {
-            if (!(this instanceof Method)) {
-                return new Method(options);
+        function service(value) {
+            if (!arguments.length) {
+                return this._service;
             }
 
-            var _self = this,
-                _public = {
-                    status: mdsol.BitFlags(_statusFlags, 'NONE'),
+            this._service = value;
 
-                    execute: function (/*[callback, ][apiParamVal1][, apiParamVal2][, ...] */) {
-                        var a = makeArray(arguments),
-                            o = this.option(),
-                            userData = clone(o),
-                            params = o.params || [],
-                            uri,
-                            paramObj = {},
-                            i, len, data;
+            return this;
+        }
 
-                        // TODO: Refactor
-                        // Move this to the prototype. In order to do that, we need to wrap the
-                        // reference to onCompleted and capture the current value of `this`.
+        function method(value) {
+            if (!arguments.length) {
+                return this._method;
+            }
 
-                        if (a.length && isFunction(a[0])) {
-                            userData.callback = a.shift();
-                        }
+            this._method = value;
 
-                        for (i = 0, len = params.length; i < len; i++) {
-                            paramObj[params[i]] = a[i];
-                        }
+            return this;
+        }
 
-                        uri = BASE_URL + o.service + '.asmx/' + o.method;
-                        data = mdsol.toJson(paramObj);
+        function params() {
+            var value;
 
-                        mdsol.ajax.post(uri, 'JSON', data, onCompleted, userData);
+            if (!arguments.length) {
+                return this._params;
+            }
 
-                        return this;
-                    },
+            if (arguments.length === 1) {
+                value = arguments[0];
+                this._params = value === null ? [] : toArray(value);
+            } else {
+                this._params = makeArray(arguments);
+            }
 
-                    dispose: function () {
-                        // Perform any cleanup
-                        return this;
-                    }
+            return this;
+        }
+
+        function callback(value) {
+            if (!arguments.length) {
+                return this._callback;
+            }
+
+            this._callback = isFunction(value) ? value : null;
+
+            return this;
+        }
+
+        function execute(/*[callback, ][apiParamVal1][, apiParamVal2][, ...] */) {
+            var a = makeArray(arguments),
+                self = this,
+                handler = this._callback,
+                parameters = this._params,
+                paramObj = {},
+                uri, data,
+                i, len;
+
+            if (a.length && isFunction(a[0])) {
+                handler = a.shift();
+            }
+
+            if (parameters.length !== a.length) {
+                throw new Error('Invalid argument count for Method.');
+            }
+
+            for (i = 0, len = parameters.length; i < len; i++) {
+                paramObj[parameters[i]] = a[i];
+            }
+
+            uri = BASE_URL + this._service + '.asmx/' + this._method;
+            data = mdsol.toJson(paramObj);
+
+            mdsol.ajax.post(uri, 'JSON', data, function () {
+                return onCompleted.apply(self, arguments);
+            }, handler);
+
+            return this;
+        }
+
+        function dispose() {
+            // Perform any cleanup
+            return this;
+        }
+
+        function onCompleted(success, data, handler, xhr) {
+            var error = null,
+                buttonEnum = mdsol.ui.MessageBox.buttonEnum,
+                msgboxOptions = {
+                    buttons: buttonEnum.OK,
+                    title: 'An error occured',
+                    visible: true,
+                    autoSize: true
                 };
 
-            function onCompleted(success, data, params, xhr) {
-                var error = null, e,
-                    buttonEnum = mdsol.ui.MessageBox.buttonEnum,
-                    msgboxOptions = {
-                        buttons: buttonEnum.OK,
-                        title: 'An error occured',
-                        visible: true,
-                        autoSize: true
-                    };
+            this.status.value('COMPLETED', success ? 'SUCCESS' : 'FAILED');
 
-                _self.option('status', ['COMPLETED', success ? 'SUCCESS' : 'FAILED']);
+            if (!success) {
+                error = parseServerError(xhr, data);
+            } else {
+                try {
+                    data = mdsol.parseJson(data.d);
+                } catch (err) {
+                    data = null;
+                    success = false;
+                    error = getExceptionError(xhr, err);
+                }
 
                 if (!success) {
-                    error = parseServerError(xhr, data);
+                    msgboxOptions.autoSize = false;
+                } else if (data && isArray(data) && data.length && data[0].error_time) {
+                    error = parseServiceError(xhr, data);
+                }
+
+                if (isFunction(handler)) {
+                    handler(success, data, this);
+                }
+            }
+
+            if (error) {
+                msgboxOptions.text = error;
+                mdsol.ui.MessageBox(msgboxOptions);
+            }
+
+            return true;
+        }
+
+        function errorLine(name, message, rawText) {
+            var line = '<div><span style="width: 100px; display: inline-block; font-weight: bold;">' +
+                name + '</span>';
+
+            if (rawText) {
+                return line + '</div><br /><pre>' + message + '</pre><br />';
+            }
+
+            return line + message + '</div>';
+        }
+
+        function parseServiceError(xhr, data) {
+            var message = '',
+                i, len, item;
+
+            message += 'The following errors occured while proccessing a request:<br /><br />' +
+                errorLine('URL:', xhr.url) + '<br />';
+
+            for (i = 0, len = data.length; i < len; i++) {
+                item = data[i];
+
+                if (item.error_time && item.message) {
+                    message += errorLine('Time:', item.error_time) + errorLine('Message:', item.message) + '<br />';
+                }
+            }
+
+            return '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' + message + '</div>';
+        }
+
+        function parseServerError(xhr, data) {
+            var message, a, b, item;
+
+            message = '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' +
+                data.statusText + '<br /><br />' +
+                errorLine('URL:', xhr.url) + '<br />';
+
+            try {
+                if (data.responseText.substring(0, '<!DOCTYPE html>'.length) === '<!DOCTYPE html>') {
+                    a = data.responseText.indexOf('<!--') + '<!--'.length;
+                    b = data.responseText.indexOf('-->', a);
+                    message += errorLine('Response:', data.responseText.substr(a, b), true);
                 } else {
-                    try {
-                        data = mdsol.parseJson(data.d);
-                    } catch (err) {
-                        data = null;
-                        success = false;
-                        error = getExceptionError(xhr, err);
-                    }
+                    // TODO: Move away from the evil eval
+                    data = eval('[' + data.responseText.replace(/\\r/g, '\\\\r').replace(/\\n/g, '\\\\n') + ']');
 
-                    if (!success) {
-                        msgboxOptions.autoSize = false;
-                    } else if (data && isArray(data) && data.length && data[0].error_time) {
-                        error = parseServiceError(xhr, data);
-                    } else {
-                        e = $.Event(this.eventName, { xhrMethod: _self, params: params });
-                        if (this.callback) {
-                            this.callback(e, success, data);
-                        }
-                    }
-                }
-
-                if (error) {
-                    msgboxOptions.text = error;
-                    mdsol.ui.MessageBox(msgboxOptions);
-                }
-
-                return true;
-            }
-
-            function errorLine(name, message, rawText) {
-                var line = '<div><span style="width: 100px; display: inline-block; font-weight: bold;">' +
-                        name + '</span>';
-
-                if (rawText) {
-                    return line + '</div><br /><pre>' + message + '</pre><br />';
-                }
-
-                return line + message + '</div>';
-            }
-
-            function parseServiceError(xhr, data) {
-                var message = '',
-                    i, len, item;
-
-                message += 'The following errors occured while proccessing a request:<br /><br />' +
-                    errorLine('URL:', xhr.url) + '<br />';
-
-                for (i = 0, len = data.length; i < len; i++) {
-                    item = data[i];
-
-                    if (item.error_time && item.message) {
-                        message += errorLine('Time:', item.error_time) + errorLine('Message:', item.message) + '<br />';
-                    }
-                }
-
-                return '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' + message + '</div>';
-            }
-
-            function parseServerError(xhr, data) {
-                var message, a, b, item;
-
-                message = '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' +
-                    data.statusText + '<br /><br />' +
-                    errorLine('URL:', xhr.url) + '<br />';
-
-                try {
-                    if (data.responseText.substring(0, '<!DOCTYPE html>'.length) === '<!DOCTYPE html>') {
-                        a = data.responseText.indexOf('<!--') + '<!--'.length;
-                        b = data.responseText.indexOf('-->', a);
-                        message += errorLine('Response:', data.responseText.substr(a, b), true);
-                    } else {
-                        // TODO: Move away from the evil eval
-                        data = eval('[' + data.responseText.replace(/\\r/g, '\\\\r').replace(/\\n/g, '\\\\n') + ']');
-
-                        for (item in data[0]) {
-                            if (data[0].hasOwnProperty(item)) {
-                                a = data[0][item];
-                                if (a.indexOf('\\r') !== -1 || a.indexOf('\\n') !== -1) {
-                                    a = a.replace(/\\r/g, '\r').replace(/\\n/g, '\n');
-                                    message += errorLine(item, a, true);
-                                } else {
-                                    message += errorLine(item, a);
-                                }
+                    for (item in data[0]) {
+                        if (data[0].hasOwnProperty(item)) {
+                            a = data[0][item];
+                            if (a.indexOf('\\r') !== -1 || a.indexOf('\\n') !== -1) {
+                                a = a.replace(/\\r/g, '\r').replace(/\\n/g, '\n');
+                                message += errorLine(item, a, true);
+                            } else {
+                                message += errorLine(item, a);
                             }
                         }
                     }
-
-                    message += '<br /></div>';
-                } catch (err) {
-                    message += errorLine('Response:', data);
                 }
 
-                return message;
+                message += '<br /></div>';
+            } catch (err) {
+                message += errorLine('Response:', data);
             }
 
-            function getExceptionError(xhr, error) {
-                return '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' +
-                    'Failed to parse data from server!<br /><br />' +
-                    errorLine('URL:', xhr.url) + '<br />' +
-                    errorLine('Message:', error) + '<br /></div>';
+            return message;
+        }
+
+        function getExceptionError(xhr, error) {
+            return '<div style="text-align:left;padding-left: 5px;padding-right: 5px;">' +
+                'Failed to parse data from server!<br /><br />' +
+                errorLine('URL:', xhr.url) + '<br />' +
+                errorLine('Message:', error) + '<br /></div>';
+        }
+
+        function Method(serviceName, methodName, parameters) {
+            if (!(this instanceof Method)) {
+                return new Method(serviceName, methodName, parameters);
             }
 
-            // TODO: Cleanup
-            // Something needs to be changed about this. Not sure if it just the name,
-            // but its not clear what is being done
-            mdsol.OptionsBase(this, options);
+            return extend(this, {
+                _service: serviceName || null,
 
-            return extend(this, _public);
+                _method: methodName || null,
+
+                _params: toArray(parameters) || [],
+
+                _callback: noop,
+
+                status: mdsol.BitFlags(_statusFlags, 'NONE')
+            });
         }
 
         Method.statusFlags = _statusFlags;
 
-        // TODO: Cleanup
-        // Something needs to be changed about this. Not sure if it just the name,
-        // but its not clear what is being done
-        mdsol.OptionsBase(Method, _defaultOptions);
+        return mdsol.Class(Method, {
+            service: service,
 
-        return Method;
+            method: method,
+
+            params: params,
+
+            callback: callback,
+
+            execute: execute,
+
+            dispose: dispose
+        }).valueOf();
     } ());
 });

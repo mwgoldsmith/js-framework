@@ -6,45 +6,65 @@ define([
     '../session',
     '../core/Class'
 ], function (mdsol, push) {
-    // NOTE: This requires mdsol.session, which is not yet implemented
-    
     mdsol.ajax.UpsertMethod = (function () {
         var DEFAULT_PARAMS = ['session_id', 'field_data'];
 
-        function UpsertMethod(options) {
+        function UpsertMethod(service, method, params) {
             if (!(this instanceof UpsertMethod)) {
-                return new UpsertMethod(options);
+                return new UpsertMethod(service, method, params);
             }
 
-            var _options = clone(options),
-                _public = {
-                    execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
-                        // TODO: Check that we are correctly referencing the session ID
-                        var token = mdsol.session.dbUser.session_id,
-                            fieldData = '', newArgs = [this, 'execute'];
+            var _public = {
+                params: function () {
+                    var curParams, value,
+                        args = [this];
 
-                        if (arguments.length && !isFunction(arguments[0])) {
-                            fieldData = arguments[0];
-                            push.apply(newArgs, arguments);
-                        }
+                    if (!arguments.length) {
+                        curParams = mdsol.Class.base(this);
 
-                        // Major performance boost (see http://jsperf.com/arrayconcatvsarraypushapply)
-                        push.apply(newArgs, [token, fieldData]);
-
-                        return mdsol.Class.base.apply(this, newArgs);
-                    },
-
-                    dispose: function () {
-                        // Perform any cleanup
+                        // Get params from base; exclude defaul parameters
+                        return curParams.filter(function (el/*, idx, arr*/) {
+                            return DEFAULT_PARAMS.indexOf(el) === -1;
+                        });
                     }
-                };
 
-            // Force option 'params' to an array and add the default request parameters
-            _options.params = toArray(_options.params);
-            push.apply(_options.params, DEFAULT_PARAMS);
+                    if (arguments.length === 1) {
+                        value = arguments[0];
+                        if (value !== null) {
+                            push.apply(args, toArray(value));
+                        }
+                    } else {
+                        push.apply(args, arguments);
+                    }
+
+                    push.apply(args, DEFAULT_PARAMS);
+
+                    return mdsol.Class.base.apply(this, args);
+                },
+
+                execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
+                    // TODO: Check that we are correctly referencing the session ID
+                    var token = mdsol.session.dbUser.session_id,
+                        fieldData = '',
+                        args = [this];
+
+                    if (arguments.length && !isFunction(arguments[0])) {
+                        fieldData = arguments[0];
+                        push.apply(args, arguments);
+                    }
+
+                    push.apply(args, [token, fieldData]);
+
+                    return mdsol.Class.base.apply(this, args);
+                },
+
+                dispose: function () {
+                    // Perform any cleanup
+                }
+            };
 
             return mdsol.Class(this, _public)
-                .base(_options)
+                .base(service, method, toArray(params).concat(DEFAULT_PARAMS))
                 .valueOf();
         }
 

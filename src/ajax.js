@@ -19,6 +19,36 @@ define([
                 HTML: 'text/html; charset=utf-8'
             };
 
+        function container(value) {
+            var $container;
+
+            if (!arguments.length) {
+                return _$element && _$element.parent();
+            }
+
+            // Destroy current element
+            if (_$element) {
+                _$element.remove();
+                _$element = null;
+            }
+
+            // Locate new container element
+            if (isString(value)) {
+                $container = $(value);
+            } else if (!value || (value && value.jquery)) {
+                $container = value;
+            }
+
+            // Create new element and append to container
+            if ($container) {
+                _$element = $('<div id="ajax_progress"><img src="./images/ajax.gif" /><span>Please wait...</span></div>')
+                    .hide()
+                    .appendTo($container);
+            }
+
+            return mdsol;
+        }
+
         function updateRequests(uuid, params) {
             if (arguments.length === 1) {
                 delete _requests[uuid];
@@ -30,15 +60,12 @@ define([
                 // Create the 'please wait' display if it doesnt exist. This should only
                 // happen the first time an ajax request is made.
                 if (!_$element) {
-                    _$element = $('<div><img src="./images/ajax.gif" /><span>Please wait...</span></div>')
-                        .hide()
-                        .appendTo($('body'));
+                    container('body');
                 }
 
                 // Show 'waiting' display
-                _$element
-                    .show()
-                    .center();
+                _$element.show();
+                mdsol.ui.center(_$element);
             } else {
                 // Hide 'waiting' display
                 _$element.hide();
@@ -88,21 +115,27 @@ define([
 
             return mdsol;
         }
-        
+
         function post(uri, contentType, data, callback, userData) {
             return jxhrRequest(uri, 'POST', contentType, data, callback, userData);
         }
-        
-        function get (uri, contentType, data, callback, userData) {
+
+        function get(uri, contentType, data, callback, userData) {
             return jxhrRequest(uri, 'GET', contentType, data, callback, userData);
         }
-        
+
         function dispose() {
             // TODO: Perform any cleanup
+
+            container(null);
+
+            return mdsol;
         }
 
         // Expose public members
         namespace('mdsol.ajax', {
+            container: container,
+
             contentTypeEnum: _contentTypeEnum,
 
             post: post,
