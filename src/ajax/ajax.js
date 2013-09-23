@@ -1,7 +1,7 @@
 ﻿// @DONE (2013-09-17 11:06)
 define([
-    './core',
-    './core/Class'
+    '../core',
+    '../core/Class'
 ], function (mdsol, $) {
     /*
     * Use IIFE to prevent cluttering of globals

@@ -1,14 +1,7 @@
-// @DONE (2013-09-17 09:43)
 (function($, undefined) {
     'use strict';
-    
-    /*
-    * Some versions of JScript fail to enumerate over properties, names of which 
-    * correspond to non-enumerable properties in the prototype chain. IE6 doesn't
-    * enumerate `toString` and `valueOf` (among other built-in `Object.prototype`)
-    * properties.
-    */
-    var dontEnumBug = !({ toString: null }).propertyIsEnumerable('toString');
+
+var dontEnumBug = !({ toString: null }).propertyIsEnumerable('toString');
 
 // @DONE (2013-09-17 09:27)
 var global = (function () {
@@ -130,8 +123,6 @@ var keys = (function () {
                 return result;
             };
     } ());
-
-/*global dontEnumBug*/
 
     var mdsol;
     
@@ -457,7 +448,7 @@ var keys = (function () {
             return wrapper.apply(this, args);
         };
     }
-
+    
     // Extend our base object with our public methods
     global.mdsol = mdsol = {
         clone: clone,
@@ -511,109 +502,98 @@ var keys = (function () {
         wrap: wrap
     };
 
-/*global extend*/
 // @DONE (2013-09-17 11:03)
 
+    var BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    
     /*
-    * Use IIFE to prevent cluttering of globals
+    * Encodes the specified string to Base 64.
     */
-    (function () {
-        var BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+    function base64Encode(input) {
+        var output = '',
+            chr1, chr2, chr3,
+            enc1, enc2, enc3,
+            enc4, i = 0;
 
-        /*
-        * Encodes the specified string to Base 64.
-        */
-        function base64Encode(input) {
-            var output = '',
-                chr1, chr2, chr3,
-                enc1, enc2, enc3,
-                enc4, i = 0;
+        input = global.escape(input);
 
-            input = global.escape(input);
+        do {
+            chr1 = input.charCodeAt(i++);
+            chr2 = input.charCodeAt(i++);
+            chr3 = input.charCodeAt(i++);
 
-            do {
-                chr1 = input.charCodeAt(i++);
-                chr2 = input.charCodeAt(i++);
-                chr3 = input.charCodeAt(i++);
+            enc1 = chr1 >> 2;
+            enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+            enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+            enc4 = chr3 & 63;
 
-                enc1 = chr1 >> 2;
-                enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-                enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-                enc4 = chr3 & 63;
+            if (isNaN(chr2)) {
+                enc3 = enc4 = 64;
+            } else if (isNaN(chr3)) {
+                enc4 = 64;
+            }
 
-                if (isNaN(chr2)) {
-                    enc3 = enc4 = 64;
-                } else if (isNaN(chr3)) {
-                    enc4 = 64;
-                }
-
-                output = output +
+            output = output +
                     BASE64.charAt(enc1) +
                     BASE64.charAt(enc2) +
                     BASE64.charAt(enc3) +
                     BASE64.charAt(enc4);
 
-            } while (i < input.length);
+        } while (i < input.length);
 
-            return output;
-        }
-
-        /*
-        * Decodes the specified Base 64 string.
-        */
-        function base64Decode(input) {
-            var fromCharCode = ''.fromCharCode,
-                output = '',
-                chr1, chr2, chr3,
-                enc1, enc2, enc3,
-                enc4, i = 0;
-
-            // Verify the input only contains valid characters
-            if (/[^A-Za-z0-9\+\/\=]/g.exec(input)) {
-                return null;
-            }
-
-            input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
-
-            do {
-                enc1 = BASE64.indexOf(input.charAt(i++));
-                enc2 = BASE64.indexOf(input.charAt(i++));
-                enc3 = BASE64.indexOf(input.charAt(i++));
-                enc4 = BASE64.indexOf(input.charAt(i++));
-
-                chr1 = (enc1 << 2) | (enc2 >> 4);
-                chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-                chr3 = ((enc3 & 3) << 6) | enc4;
-
-                output = output + fromCharCode(chr1);
-
-                if (enc3 !== 64) {
-                    output = output + fromCharCode(chr2);
-                }
-                if (enc4 !== 64) {
-                    output = output + fromCharCode(chr3);
-                }
-            } while (i < input.length);
-
-            return global.unescape(output);
-        }
-        
-        extend(mdsol, {
-            base64Encode: base64Encode,
-
-            base64Decode: base64Decode
-        });
-    } ());
-
-/*global extend*/
-// @DONE (2013-09-17 11:03)
+        return output;
+    }
 
     /*
-    * Use IIFE to prevent cluttering of globals
+    * Decodes the specified Base 64 string.
     */
-    (function () {
-        function getCookie(name) {
-            var cookies = global.document.cookie.split(';')
+    function base64Decode(input) {
+        var fromCharCode = ''.fromCharCode,
+            output = '',
+            chr1, chr2, chr3,
+            enc1, enc2, enc3,
+            enc4, i = 0;
+
+        // Verify the input only contains valid characters
+        if (/[^A-Za-z0-9\+\/\=]/g.exec(input)) {
+            return null;
+        }
+
+        input = input.replace(/[^A-Za-z0-9\+\/\=]/g, '');
+
+        do {
+            enc1 = BASE64.indexOf(input.charAt(i++));
+            enc2 = BASE64.indexOf(input.charAt(i++));
+            enc3 = BASE64.indexOf(input.charAt(i++));
+            enc4 = BASE64.indexOf(input.charAt(i++));
+
+            chr1 = (enc1 << 2) | (enc2 >> 4);
+            chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+            chr3 = ((enc3 & 3) << 6) | enc4;
+
+            output = output + fromCharCode(chr1);
+
+            if (enc3 !== 64) {
+                output = output + fromCharCode(chr2);
+            }
+            if (enc4 !== 64) {
+                output = output + fromCharCode(chr3);
+            }
+        } while (i < input.length);
+
+        return global.unescape(output);
+    }
+
+    extend(mdsol, {
+        base64Encode: base64Encode,
+
+        base64Decode: base64Decode
+    });
+
+// @DONE (2013-09-23 18:52)
+
+    function getCookie(name) {
+        var cookies = global.document.cookie.split(';')
                 .map(
                     function (x) { return x.trim().split(/(=)/); })
                 .reduce(
@@ -622,30 +602,642 @@ var keys = (function () {
                         return a;
                     }, {});
 
-            return cookies[name];
-        }
+        return cookies[name];
+    }
 
-        function setCookie(name, value, domain, expiration) {
-            global.document.cookie = name + '=' + value 
-                + (expiration ? '; expires=' + expiration : '') 
-                + (domain ? '; domain=' + domain : '') 
+    function setCookie(name, value, domain, expiration) {
+        global.document.cookie = name + '=' + value
+                + (expiration ? '; expires=' + expiration : '')
+                + (domain ? '; domain=' + domain : '')
                 + '; path=/';
 
-            return mdsol;
+        return mdsol;
+    }
+
+    function deleteCookie(name) {
+        global.document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+
+        return mdsol;
+    }
+
+    extend(mdsol, {
+        getCookie: getCookie,
+
+        setCookie: setCookie,
+
+        deleteCookie: deleteCookie
+    });
+
+// @DONE (2013-09-12 18:25)
+
+    var parseJson = (function () {
+        /*
+        * https://github.com/douglascrockford/JSON-js/blob/master/json_parse_state.js
+        */
+
+        var _state,
+            _stack,
+            _container,
+            _key,
+            _value,
+            _escapes = {
+                '\\': '\\',
+                '"': '"',
+                '/': '/',
+                't': '\t',
+                'n': '\n',
+                'r': '\r',
+                'f': '\f',
+                'b': '\b'
+            },
+            _string = {
+                go: function () {
+                    _state = 'ok';
+                },
+                firstokey: function () {
+                    _key = _value;
+                    _state = 'colon';
+                },
+                okey: function () {
+                    _key = _value;
+                    _state = 'colon';
+                },
+                ovalue: function () {
+                    _state = 'ocomma';
+                },
+                firstavalue: function () {
+                    _state = 'acomma';
+                },
+                avalue: function () {
+                    _state = 'acomma';
+                }
+            },
+            _number = {
+                go: function () {
+                    _state = 'ok';
+                },
+                ovalue: function () {
+                    _state = 'ocomma';
+                },
+                firstavalue: function () {
+                    _state = 'acomma';
+                },
+                avalue: function () {
+                    _state = 'acomma';
+                }
+            },
+            _action = {
+                '{': {
+                    go: function () {
+                        _stack.push({ state: 'ok' });
+                        _container = {};
+                        _state = 'firstokey';
+                    },
+                    ovalue: function () {
+                        _stack.push({ container: _container, state: 'ocomma', key: _key });
+                        _container = {};
+                        _state = 'firstokey';
+                    },
+                    firstavalue: function () {
+                        _stack.push({ container: _container, state: 'acomma' });
+                        _container = {};
+                        _state = 'firstokey';
+                    },
+                    avalue: function () {
+                        _stack.push({ container: _container, state: 'acomma' });
+                        _container = {};
+                        _state = 'firstokey';
+                    }
+                },
+                '}': {
+                    firstokey: function () {
+                        var pop = _stack.pop();
+                        _value = _container;
+                        _container = pop.container;
+                        _key = pop.key;
+                        _state = pop.state;
+                    },
+                    ocomma: function () {
+                        var pop = _stack.pop();
+                        _container[_key] = _value;
+                        _value = _container;
+                        _container = pop.container;
+                        _key = pop.key;
+                        _state = pop.state;
+                    }
+                },
+                '[': {
+                    go: function () {
+                        _stack.push({ state: 'ok' });
+                        _container = [];
+                        _state = 'firstavalue';
+                    },
+                    ovalue: function () {
+                        _stack.push({ container: _container, state: 'ocomma', key: _key });
+                        _container = [];
+                        _state = 'firstavalue';
+                    },
+                    firstavalue: function () {
+                        _stack.push({ container: _container, state: 'acomma' });
+                        _container = [];
+                        _state = 'firstavalue';
+                    },
+                    avalue: function () {
+                        _stack.push({ container: _container, state: 'acomma' });
+                        _container = [];
+                        _state = 'firstavalue';
+                    }
+                },
+                ']': {
+                    firstavalue: function () {
+                        var pop = _stack.pop();
+                        _value = _container;
+                        _container = pop.container;
+                        _key = pop.key;
+                        _state = pop.state;
+                    },
+                    acomma: function () {
+                        var pop = _stack.pop();
+                        _container.push(_value);
+                        _value = _container;
+                        _container = pop.container;
+                        _key = pop.key;
+                        _state = pop.state;
+                    }
+                },
+                ':': {
+                    colon: function () {
+                        if (Object.hasOwnProperty.call(_container, _key)) {
+                            throw new SyntaxError('Duplicate key "' + _key + '"');
+                        }
+                        _state = 'ovalue';
+                    }
+                },
+                ',': {
+                    ocomma: function () {
+                        _container[_key] = _value;
+                        _state = 'okey';
+                    },
+                    acomma: function () {
+                        _container.push(_value);
+                        _state = 'avalue';
+                    }
+                },
+                'true': {
+                    go: function () {
+                        _value = true;
+                        _state = 'ok';
+                    },
+                    ovalue: function () {
+                        _value = true;
+                        _state = 'ocomma';
+                    },
+                    firstavalue: function () {
+                        _value = true;
+                        _state = 'acomma';
+                    },
+                    avalue: function () {
+                        _value = true;
+                        _state = 'acomma';
+                    }
+                },
+                'false': {
+                    go: function () {
+                        _value = false;
+                        _state = 'ok';
+                    },
+                    ovalue: function () {
+                        _value = false;
+                        _state = 'ocomma';
+                    },
+                    firstavalue: function () {
+                        _value = false;
+                        _state = 'acomma';
+                    },
+                    avalue: function () {
+                        _value = false;
+                        _state = 'acomma';
+                    }
+                },
+                'null': {
+                    go: function () {
+                        _value = null;
+                        _state = 'ok';
+                    },
+                    ovalue: function () {
+                        _value = null;
+                        _state = 'ocomma';
+                    },
+                    firstavalue: function () {
+                        _value = null;
+                        _state = 'acomma';
+                    },
+                    avalue: function () {
+                        _value = null;
+                        _state = 'acomma';
+                    }
+                }
+            };
+
+        function debackslashify(text) {
+            // Remove and replace any backslash escapement.
+
+            return text.replace(/\\(?:u(.{4})|([^u]))/g, function (a, b, c) {
+                return b ? String.fromCharCode(parseInt(b, 16)) : _escapes[c];
+            });
         }
 
-        function deleteCookie(name) {
-            global.document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        return function (source, reviver) {
+            var r,
+                tx = /^[\x20\t\n\r]*(?:([,:\[\]{}]|true|false|null)|(-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)|"((?:[^\r\n\t\\\"]|\\(?:["\\\/trnfb]|u[0-9a-fA-F]{4}))*)")/;
 
-            return mdsol;
+            _state = 'go';
+            _stack = [];
+
+            try {
+                for (; ; ) {
+                    r = tx.exec(source);
+                    if (!r) {
+                        break;
+                    }
+
+                    if (r[1]) {
+                        _action[r[1]][_state]();
+                    } else if (r[2]) {
+                        _value = +r[2];
+                        _number[_state]();
+                    } else {
+                        _value = debackslashify(r[3]);
+                        _string[_state]();
+                    }
+
+                    source = source.slice(r[0].length);
+                }
+
+            } catch (e) {
+                _state = e;
+            }
+
+            if (_state !== 'ok' || /[^\x20\t\n\r]/.test(source)) {
+                throw _state instanceof SyntaxError ? _state : new SyntaxError('JSON');
+            }
+
+            return typeof reviver === 'function' ? (function walk(holder, key) {
+                var k, v, value = holder[key];
+
+                if (value && typeof value === 'object') {
+                    for (k in value) {
+                        if (hasOwnProperty.call(value, k)) {
+                            v = walk(value, k);
+                            if (v !== undefined) {
+                                value[k] = v;
+                            } else {
+                                delete value[k];
+                            }
+                        }
+                    }
+                }
+                return reviver.call(holder, key, value);
+            } ({ '': _value }, '')) : _value;
+        };
+    } ());
+
+    var toJson = (function () {
+        /*
+        * Derived from https://github.com/douglascrockford/JSON-js/blob/master/json2.js
+        */
+
+        var escapable = /[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,
+            gap = '',
+            indent = '',
+            meta = {
+                '\b': '\\b',
+                '\t': '\\t',
+                '\n': '\\n',
+                '\f': '\\f',
+                '\r': '\\r',
+                '"': '\\"',
+                '\\': '\\\\'
+            },
+            rep;
+
+        function fmtDigit(n) {
+            return n < 10 ? '0' + n : n;
+        }
+
+        function quote(string) {
+            escapable.lastIndex = 0;
+
+            return escapable.test(string) ? '"' + string.replace(escapable, function (a) {
+                var c = meta[a];
+
+                return typeof c === 'string'
+                ? c
+                : '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
+            }) + '"' : '"' + string + '"';
+        }
+
+        function str(key, holder) {
+            var i, k, v,
+                length,
+                partial,
+                mind = gap,
+                value = holder[key];
+
+            if (value && typeof value === 'object' && typeof value.toJSON === 'function') {
+                value = value.toJSON(key);
+            }
+
+            switch (typeof value) {
+                case 'string':
+                    return quote(value);
+
+                case 'number':
+                    return isFinite(value) ? String(value) : 'null';
+
+                case 'boolean':
+                case 'null':
+                    return String(value);
+
+                case 'object':
+                    if (!value) {
+                        return 'null';
+                    }
+
+                    gap += indent;
+                    partial = [];
+
+                    if (isString(value)) {
+                        length = value.length;
+                        for (i = 0; i < length; i += 1) {
+                            partial[i] = str(i, value) || 'null';
+                        }
+
+                        v = partial.length === 0
+                            ? '[]'
+                            : gap
+                                ? '[\n' + gap + partial.join(',\n' + gap) + '\n' + mind + ']'
+                                : '[' + partial.join(',') + ']';
+
+                        gap = mind;
+
+                        return v;
+                    }
+
+                    if (rep && typeof rep === 'object') {
+                        length = rep.length;
+
+                        for (i = 0; i < length; i += 1) {
+                            if (typeof rep[i] === 'string') {
+                                k = rep[i];
+                                v = str(k, value);
+                                if (v) {
+                                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                                }
+                            }
+                        }
+                    } else {
+                        for (k in value) {
+                            if (hasOwnProperty.call(value, k)) {
+                                v = str(k, value);
+                                if (v) {
+                                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                                }
+                            }
+                        }
+                    }
+
+                    v = partial.length === 0
+                        ? '{}'
+                        : gap
+                            ? '{\n' + gap + partial.join(',\n' + gap) + '\n' + mind + '}'
+                            : '{' + partial.join(',') + '}';
+
+                    gap = mind;
+                    return v;
+            }
+
+            throw TypeError('Unsupported object type');
+        }
+
+        if (!isFunction(Date.prototype.toJSON)) {
+            Date.prototype.toJSON = function () {
+                return isFinite(this.valueOf())
+                    ? this.getUTCFullYear() + '-' +
+                        fmtDigit(this.getUTCMonth() + 1) + '-' +
+                        fmtDigit(this.getUTCDate()) + 'T' +
+                        fmtDigit(this.getUTCHours()) + ':' +
+                        fmtDigit(this.getUTCMinutes()) + ':' +
+                        fmtDigit(this.getUTCSeconds()) + 'Z'
+                    : null;
+            };
+
+            String.prototype.toJSON =
+            Number.prototype.toJSON =
+            Boolean.prototype.toJSON = function () {
+                return this.valueOf();
+            };
+        }
+
+        return function(value) {
+            return str('', { '': value });
+        };
+    } ());
+    
+    extend(mdsol, {
+        parseJson: parseJson,
+
+        toJson: toJson
+    });
+
+    /*
+    * Use IIFE to prevent cluttering of globals
+    */
+    (function () {
+        function sha1Ft(t, b, c, d) {
+            if (t < 20) {
+                return (b & c) | ((~b) & d);
+            }
+            if (t < 40) {
+                return b ^ c ^ d;
+            }
+            if (t < 60) {
+                return (b & c) | (b & d) | (c & d);
+            }
+            return b ^ c ^ d;
+        }
+
+        function sha1Kt(t) {
+            return (t < 20) ? 1518500249 : (t < 40) ? 1859775393 : (t < 60) ? -1894007588 : -899497514;
+        }
+
+        function bitRol(num, cnt) {
+            return (num << cnt) | (num >>> (32 - cnt));
+        }
+
+        function str2RstrUtf8(input) {
+            var output = '',
+                i = -1,
+                x,
+                y;
+
+            while (++i < input.length) {
+                /* Decode utf-16 surrogate pairs */
+                x = input.charCodeAt(i);
+                y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
+                
+                if (0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF) {
+                    x = 0x10000 + ((x & 0x03FF) << 10) + (y & 0x03FF);
+                    i++;
+                }
+
+                /* Encode output as utf-8 */
+                if (x <= 0x7F) {
+                    output += String.fromCharCode(x);
+                } else if (x <= 0x7FF) {
+                    output += String.fromCharCode(0xC0 | ((x >>> 6) & 0x1F),
+                    0x80 | (x & 0x3F));
+                } else if (x <= 0xFFFF) {
+                    output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F),
+                    0x80 | ((x >>> 6) & 0x3F),
+                    0x80 | (x & 0x3F));
+                } else if (x <= 0x1FFFFF) {
+                    output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07),
+                    0x80 | ((x >>> 12) & 0x3F),
+                    0x80 | ((x >>> 6) & 0x3F),
+                    0x80 | (x & 0x3F));
+                }
+            }
+
+            return output;
+        }
+
+        function binb2Rstr(input) {
+            var output = '',
+                i;
+
+            for (i = 0; i < input.length * 32; i += 8) {
+                output += String.fromCharCode((input[i >> 5] >>> (24 - i % 32)) & 0xFF);
+            }
+
+            return output;
         }
         
+        function safeAdd(x, y) {
+            var lsw = (x & 0xFFFF) + (y & 0xFFFF),
+                msw = (x >> 16) + (y >> 16) + (lsw >> 16);
+
+            return (msw << 16) | (lsw & 0xFFFF);
+        }
+
+        function binbSha1(x, len) {
+            var w = [],
+                a = 1732584193,
+                b = -271733879,
+                c = -1732584194,
+                d = 271733878,
+                e = -1009589776,
+                i, j, t,
+                olda, oldb, oldc,
+                oldd, olde;
+
+            x[len >> 5] |= 0x80 << (24 - len % 32);
+            x[((len + 64 >> 9) << 4) + 15] = len;
+
+            for (i = 0; i < x.length; i += 16) {
+                olda = a;
+                oldb = b;
+                oldc = c;
+                oldd = d;
+                olde = e;
+
+                for (j = 0; j < 80; j++) {
+                    if (j < 16) {
+                        w[j] = x[i + j];
+                    } else {
+                        w[j] = bitRol(w[j - 3] ^ w[j - 8] ^ w[j - 14] ^ w[j - 16], 1);
+                    }
+
+                    t = safeAdd(safeAdd(bitRol(a, 5), sha1Ft(j, b, c, d)), safeAdd(safeAdd(e, w[j]), sha1Kt(j)));
+                    e = d;
+                    d = c;
+                    c = bitRol(b, 30);
+                    b = a;
+                    a = t;
+                }
+
+                a = safeAdd(a, olda);
+                b = safeAdd(b, oldb);
+                c = safeAdd(c, oldc);
+                d = safeAdd(d, oldd);
+                e = safeAdd(e, olde);
+            }
+
+            return [a, b, c, d, e];
+        }
+
+        function rstr2Binb(input) {
+            var output = [],
+                i;
+
+            output.length = input.length >> 2;
+            for (i = 0; i < output.length; i++) {
+                output[i] = 0;
+            }
+
+            for (i = 0; i < input.length * 8; i += 8) {
+                output[i >> 5] |= (input.charCodeAt(i / 8) & 0xFF) << (24 - i % 32);
+            }
+
+            return output;
+        }
+
+        function rstrSha1(s) {
+            return binb2Rstr(binbSha1(rstr2Binb(s), s.length * 8));
+        }
+
+        function rstrHmacSha1(key, data) {
+            var bkey = rstr2Binb(key),
+                hash,
+                ipad = [],
+                opad = [],
+                i;
+
+            if (bkey.length > 16) {
+                bkey = binbSha1(bkey, key.length * 8);
+            }
+
+            for (i = 0; i < 16; i++) {
+                ipad[i] = bkey[i] ^ 0x36363636;
+                opad[i] = bkey[i] ^ 0x5C5C5C5C;
+            }
+
+            hash = binbSha1(ipad.concat(rstr2Binb(data)), 512 + data.length * 8);
+
+            return binb2Rstr(binbSha1(opad.concat(hash), 512 + 160));
+        }
+
+        function rstr2Hex(input) {
+            var hexTab = '0123456789ABCDEF',
+                output = '',
+                x,
+                i;
+
+            for (i = 0; i < input.length; i++) {
+                x = input.charCodeAt(i);
+                output += hexTab.charAt((x >>> 4) & 0x0F) + hexTab.charAt(x & 0x0F);
+            }
+            return output;
+        }
+
         extend(mdsol, {
-            getCookie: getCookie,
+            sha1: function (data) {
+                return rstr2Hex(rstrSha1(str2RstrUtf8(data)));
+            },
 
-            setCookie: setCookie,
-
-            deleteCookie: deleteCookie
+            hmacSha1: function (key, data) {
+                return rstr2Hex(rstrHmacSha1(str2RstrUtf8(key), str2RstrUtf8(data)));
+            }
         });
     } ());
 
@@ -675,111 +1267,22 @@ var trim = (function () {
             };
     } ());
 
-/*global isArray,isFunction,extend*/
-// @DONE (2013-09-17 11:00)
+// @DONE (2013-09-23 18:25)
 
     /*
-    * Use IIFE to prevent cluttering of globals
+    * Removes non alpha-numeric values from the specified string.
     */
-    (function () {
-        var REGEX_VALID_CHARS = /^[\],:{}\s]*$/,
-            REGEX_VALID_BRACES = /(?:^|:|,)(?:\s*\[)+/g,
-            REGEX_VALID_ESCAPE = /\\(?:["\\\/bfnrt]|u[\da-fA-F]{4})/g,
-            REGEX_VALID_TOKENS = /"[^"\\\r\n]*"|true|false|null|-?(?:\d\d*\.|)\d+(?:[eE][\-+]?\d+|)/g,
-            _regexCx = /[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g;
-        
-        function parseJson(text) {
-            var data = trim(text);
+    function alphaNumeric(value) {
+        return isString(value) ? value.replace(/\W/gi, '') : null;
+    }
 
-            // Logic borrowed from Crockford (https://github.com/douglascrockford/JSON-js/blob/master/json2.js)
+    extend(mdsol, {
+        alphaNumeric: alphaNumeric,
 
-            // Replace certain Unicode characters with escape sequences to prevent either silently
-            // deleting them, or treating them as line endings
-            _regexCx.lastIndex = 0;
-            if (_regexCx.test(data)) {
-                data = text.replace(_regexCx, function (a) {
-                    return '\\u' + ('0000' + a.charCodeAt(0).toString(16)).slice(-4);
-                });
-            }
+        trim: trim
+    });
 
-            // Use Native JSON parser if present
-            if (global.JSON && isFunction(global.JSON.parse)) {
-                return global.JSON.parse(data);
-            }
-
-            if (REGEX_VALID_CHARS.test(data.replace(REGEX_VALID_ESCAPE, '@')
-                    .replace(REGEX_VALID_TOKENS, ']')
-                    .replace(REGEX_VALID_BRACES, ''))) {
-
-                return (new Function('return ' + data))();
-            }
-
-            throw new Error('Failed to parse JSON data.');
-        }
-        
-        function toJson(o) {
-            var result = '',
-                values,
-                pairs,
-                i, len;
-
-            // This is far from robust, but it gets the job done for now
-            // TODO: Refactor
-
-            if (!o) {
-                result = ' ';
-            } else if (isArray(o)) {
-                // Assume array of objects containing 'name' and 'value' properties
-                for (i = 0, len = o.length; i < len; i++) {
-                    result += '"' + o[i].name + '":"' + o[i].value + '",';
-                }
-            } else if (typeof o === 'string') {
-                // Assume string of query string style name=value pairs
-                pairs = o.split('&');
-                for (i = 0, len = pairs.length; i < len; i++) {
-                    values = pairs[i].split('=');
-                    result += '"' + values[0] + '":"' + ((values.length > 1) ? values[1] : '') + '",';
-                }
-            } else {
-                // Assume object; convert to stringified key:value pairs
-                values = keys(o);
-                for (i = 0, len = values.length; i < len; i++) {
-                    result += '"' + values[i] + '":"' + o[values[i]] + '",';
-                }
-            }
-
-            return '{' + result.slice(0, -1) + '}';
-        }
-        
-        extend(mdsol, {
-            parseJson: parseJson,
-
-            toJson: toJson
-        });
-    }());
-
-/*global isString,extend*/
-// @DONE (2013-09-16 22:51)
-
-    /*
-    * Use IIFE to prevent cluttering of globals
-    */
-    (function () {
-        /*
-        * Removes non alpha-numeric values from the specified string.
-        */
-        function alphaNumeric(value) {
-            return isString(value) ? value.replace(/\W/gi, '') : null;
-        }
-
-        extend(mdsol, {
-            alphaNumeric: alphaNumeric,
-
-            trim: trim
-        });
-    }());
-
-mdsol.Class = (function () {
+    mdsol.Class = (function () {
         var _funcTest = /xyz/.test(function () { var xyz = 0; return xyz; }) ? /\bbase\b/ : /.*/,
             _isInstance = function (obj) {
                 return isObject(obj) && !isPlainObject(obj);
@@ -832,6 +1335,7 @@ mdsol.Class = (function () {
                 _super = parent.prototype;
                 child.prototype = extend(Object.create(_super), child.prototype, {
                     constructor: child,
+
                     base: (function (sup) {
                         return function () {
                             var p, m, s;
@@ -842,7 +1346,7 @@ mdsol.Class = (function () {
                             for (p in this) {
                                 m = this[p];
                                 s = sup[p];
-                                
+
                                 if (isFunction(m) && isFunction(s) && _funcTest.test(m)) {
                                     this[p] = _wrappedSub(this, s, m);
                                 }
@@ -869,10 +1373,10 @@ mdsol.Class = (function () {
                         if (!item) {
                             throw new Error('Unknown abstract object: "' + objs[i] + '"');
                         }
-
+                        debugger;
                         // Copy the properties from the object to the target only if
                         // the target doesn't have an Own property of the same name
-                        item = new item();
+                        item = Object.create(item);
                         for (m in item) {
                             if (item.hasOwnProperty(m) && !target.hasOwnProperty(m)) {
                                 target[m] = item[m];
@@ -882,59 +1386,6 @@ mdsol.Class = (function () {
                 }
 
                 return target;
-            },
-            _base = function (/* [, argA[, argB[, ...]]] */) {
-                var caller = arguments.callee.caller,
-                    target, f,
-                    baseProto, baseFunc;
-
-                // NOTE: DEPRECATED!
-
-                if (mdsol.DEBUG && !caller) {
-                    throw new Error('base() cannot run in strict mode: arguments.caller not defined.');
-                }
-
-                // Ugliy fix for the fact that both Class.base() and Class().base() call
-                // this function using apply(). We need the function which called that
-                // method.
-                caller = caller.caller;
-
-                // If this is not a constructor, call the superclass method
-                if (!caller.parent_) {
-                    return caller.super_.apply(this, arguments);
-                }
-
-                target = caller.parent_.constructor;
-                baseProto = this;
-
-                // Walk the prototype chain until we find [[Prototype]] for the base
-                while (baseProto) {
-                    if (baseProto.constructor === target) {
-                        break;
-                    }
-
-                    baseProto = Object.getPrototypeOf(baseProto);
-                }
-
-                // Call the base class constructor in the context `this`. 
-                // If called from the context of this->[[Prototype]] for 
-                // the base object, any modifications to `this` would alter
-                // base.prototype and lose the ability to have multiple
-                // instances.
-                target.apply(this, arguments);
-
-                // Set a reference to the super method for each method on the
-                // object which also exists on the base. This way, every call
-                // to base() from a method will just need to retreive that 
-                // value instead of finding the base proto first.
-                for (f in this) {
-                    baseFunc = isFunction(this[f]) && baseProto[f];
-                    if (isFunction(baseFunc)) {
-                        this[f].super_ = baseFunc;
-                    }
-                }
-
-                return this;
             };
 
         function Class(obj, proto) {
@@ -957,10 +1408,8 @@ mdsol.Class = (function () {
                 return this;
             }
 
-            function base() {
-                _class = _base.apply(_class, arguments);
-
-                return this;
+            function valueOf() {
+                return _class;
             }
 
             if (!_instance && !isFunction(_class)) {
@@ -978,11 +1427,7 @@ mdsol.Class = (function () {
 
                 implement: implement,
 
-                base: base,
-
-                valueOf: function () {
-                    return _class;
-                }
+                valueOf: valueOf
             });
         };
 
@@ -991,14 +1436,600 @@ mdsol.Class = (function () {
 
             implement: _implement,
 
-            namespace: _namespace,
-
-            base: function (that) {
-                return _base.apply(that, makeArray(arguments, 1));
-            }
+            namespace: _namespace
         });
     } ());
-/*global isEmpty,isFunction,namespace,extend*/
+
+/* @DONE: 2013-09-23 07:26 */
+
+    mdsol.BitFlags = (function () {
+        var _flagValue = function (flag) {
+                /* @flag = name | value */
+                var value, f;
+
+                if (isString(flag)) {
+                    // Verify the flag name exists
+                    f = this._flags[flag];
+                    value = f !== undefined ? f : null;
+                } else if (isNumeric(flag)) {
+                    // Verify value is a possible valid combination of flags
+                    value = ((flag & this._entropy) === flag) ? flag : null;
+                } else {
+                    // Invalid data type
+                    value = null;
+                }
+
+                if (value === null) {
+                    throw new Error('Invalid bit flag value');
+                }
+
+                return value;
+            },
+            _test = function (any, flags) {
+                /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
+                var f, i, match = !any;
+
+                for (i = flags.length; i--; ) {
+                    f = this._flagValue(flags[i]);
+
+                    // Test if the flag is set
+                    if (!match || !any) {
+                        if ((f & this._value) === f) {
+                            if (any) {
+                                match = true;
+                            }
+                        } else if (!any) {
+                            match = false;
+                        }
+                    }
+                }
+
+                return match;
+            },
+            _bitFlags = function (flags) {
+                /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
+                var i, value = 0;
+
+                // Combine flag(s) to set
+                for (i = flags.length; i--; ) {
+                    value = value | this._flagValue(flags[i]);
+                }
+
+                return value;
+            },
+            _value = function () {
+                if (arguments.length) {
+                    this._value = this._bitFlags(slice.call(arguments));
+                }
+
+                return this._value;
+            };
+
+        function equals() {
+            return this._value === this._bitFlags(slice.call(arguments));
+        }
+
+        function test() {
+            return this._test(false, slice.call(arguments));
+        }
+
+        function testAny() {
+            return this._test(true, slice.call(arguments));
+        }
+
+        function toString() {
+            var names = [],
+                f = this._flags,
+                p;
+
+            // Create array of flag names which are currently set
+            for (p in f) {
+                if (f.hasOwnProperty(p) && this._test(true, p)) {
+                    names.push(p);
+                }
+            }
+
+            return names.toString();
+        }
+
+        function valueOf() {
+            return this._flags;
+        }
+
+        function BitFlags(flagsObject, initValue) {
+            if (!(this instanceof BitFlags)) {
+                return new BitFlags(flagsObject, initValue);
+            }
+
+            function getMaxValue(flags) {
+                var f, all = 0;
+
+                // Get combined value of all flags
+                for (f in flags) {
+                    if (flags.hasOwnProperty(f) && !isNumeric(flags[f])) {
+                        all = 0;
+                        break;
+                    }
+
+                    all = all | flags[f];
+                }
+
+                if (!all) {
+                    throw new Error('Invalid bit flag object');
+                }
+
+                return all;
+            }
+
+            // Value must be set after extend()
+            // _bitFlags() is dependand on this._flags already existing
+            return extend(this, {
+                _entropy: getMaxValue(flagsObject),
+                
+                _flags: clone(flagsObject)
+            }).value(initValue !== undefined ? toArray(initValue) : 0);
+        }
+
+        return mdsol.Class(BitFlags, {
+            _flagValue: _flagValue,
+
+            _test: _test,
+
+            _bitFlags: _bitFlags,
+
+            equals: equals,
+
+            test: test,
+
+            testAny: testAny,
+
+            toString: toString,
+
+            value: _value,
+
+            valueOf: valueOf
+        }).valueOf();
+    } ());
+
+/* @DONE: 2013-09-23 07:26 */
+
+    mdsol.Enum = (function () {
+        var _enumValue = function(v) {
+                if (v === null) {
+                    return null;
+                } else if (isNumeric(v) && this._enum[v] !== undefined) {
+                    // Verify it is a valid enum name (see: http://jsperf.com/hasownproperty-vs-in-vs-other/)
+                    return _enum[v];
+                } else if (isNumeric(v) && this._all.indexOf(v) !== -1) {
+                    // Verify it is a valid enum value
+                    return v;
+                }
+
+                throw new Error('Invalid enum value');
+            },
+            _value = function(value) {
+                if (arguments.length) {
+                    this._value = this._enumValue(value);
+                }
+
+                return this._value;
+            };
+
+        function test(value) {
+            return this._value === this._enumValue(value);
+        }
+
+        function toString() {
+            var e = this._enum, p;
+
+            for (p in e) {
+                if (e.hasOwnProperty(p) && e[p] === _value) {
+                    return p;
+                }
+            }
+
+            return null;
+        }
+
+        function valueOf() {
+            return this._enum;
+        }
+        
+        function Enum(enumObj, initValue) {
+            if (!(this instanceof Enum)) {
+                return new Enum(enumObj, initValue);
+            }
+
+            function getValues(o) {
+                var values = [], p;
+
+                for (p in o) {
+                    if (o.hasOwnProperty(p) && !isNumeric(o[p])) {
+                        values = [];
+                        break;
+                    }
+
+                    values.push(o[p]);
+                }
+
+                if (!values.length) {
+                    throw new Error('Invalid enum object');
+                }
+
+                return values;
+            }
+
+            // Value must be set after extend()
+            // _enumValue() is dependand on this._enum already existing
+            return extend(this, {
+                _all: getValues(enumObj),
+
+                _enum: clone(enumObj),
+                
+                _value: null
+            }).value(initValue !== undefined ? initValue : null);
+        }
+
+        return mdsol.Class(Enum, {
+            _enumValue: _enumValue,
+            
+            test: test,
+            
+            toString: toString,
+            
+            value: _value, 
+            
+            valueOf: valueOf
+        }).valueOf();
+    }());
+
+    mdsol.ObjectArray = (function () {
+        var ARRAY_METHODS = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift', 'slice'],
+            _softIndexOf = function (arr, value) {
+                /*
+                * Return the index of the first match for `value` within the
+                * array. Strict comparison is not used.
+                */
+                var i, len;
+                
+                for (i = 0, len = arr.length; i < len; i++) {
+                    if (arr[i] == value) {
+                        return i;
+                    }
+                }
+
+                return -1;
+            },
+            _getProperty = function(obj, identifier) {
+                var a = identifier.split('.'),
+                    item = obj,
+                    i, len;
+
+                for (i = 0, len = a.length; i < len && item; i++) {
+                    item = a[i] in item ? item[a[i]] : undefined;
+                }
+
+                return item;
+            },
+            _filterItems = function(inclusive, prop/*, varValue*/) {
+                var args = slice.call(arguments, 2),
+                    exclude = !inclusive,
+                    baseArray = this._array,
+                    values,
+                    v, i;
+
+                values = isArray(args[0]) ? args[0] : toArray(args);
+
+                for (i = baseArray.length; i--;) {
+                    v = _getProperty(baseArray[i], prop);
+
+                    if (!!(exclude ^ !(v !== undefined && _softIndexOf(values, v) !== -1))) {
+                        baseArray.splice(i, 1);
+                    }
+                }
+
+                return this;
+            },
+            _getAll = function(inclusive, prop/*, varValue */) {
+                var args = slice.call(arguments, 2),
+                    baseArray = this._array,
+                    exclude = !inclusive,
+                    values,
+                    result = [],
+                    item, v, i;
+
+                values = isArray(args[0]) ? args[0] : toArray(args);
+
+                for (i = baseArray.length; i--;) {
+                    item = baseArray[i];
+                    v = _getProperty(item, prop);
+
+                    if (!!(exclude ^ (v !== undefined && _softIndexOf(values, v) !== -1))) {
+                        result.push(item);
+                    }
+                }
+
+                return result;
+            },
+            _getUnique = function(/* varKey */) {
+                var props = slice.call(arguments),
+                    baseArray = this._array,
+                    item, i, j,
+                    exists,
+                    result = [];
+
+                for (i = baseArray.length; i--;) {
+                    item = baseArray[i];
+
+                    exists = result.some(function (e) {
+                        for (j = props.length - 1, exists = false; j >= 0 && !exists; j--) {
+                            exists = item[props[j]] === e[props[j]];
+                        }
+
+                        return exists;
+                    });
+
+                    if (!exists) {
+                        result.push(item);
+                    }
+                }
+
+                return result;
+            },
+            _value = function (value) {
+                if (!arguments.length) {
+                    // Returns the collection
+                    return this._array;
+                } else {
+                    // Sets the collection
+                    this._array = value;
+                }
+
+                return this;
+            };
+
+        function contains(key, value) {
+            /*
+            * Returns true if any objects in the collection match the key:value pair
+            */
+            var baseArray = this._array,
+                i, exists = false;
+
+            // Determine if at least on item with the property/value pair exists
+            for (i = baseArray.length - 1; i >= 0 && !exists; i--) {
+                exists = baseArray[i][key] == value;
+            }
+
+            return exists;
+        }
+
+        function filter(/*key, varValues*/) {
+            /*
+            * Filters the collection to exclude all objects matching the key and 
+            * and any of the provided values
+            */
+            var args = [false];
+
+            push.apply(args, arguments);
+
+            return _filterItems.apply(this, args);
+        }
+
+        function get(key, value) {
+            /*
+            * Returns the first object in the collection which matches the key:value pair
+            */
+            
+            var baseArray = this._array,
+                i, item, v;
+
+            for (i = baseArray.length; i--; ) {
+                item = baseArray[i];
+                v = _getProperty(item, key);
+
+                if (value !== undefined && v == value) {
+                    return item;
+                }
+            }
+
+            return null;
+        }
+
+        function getAll(/* key, varValues */) {
+            /*
+            * Returns all objects in the collection which match the key and any of the 
+            * provided values
+            */
+            
+            var args = [true];
+
+            push.apply(args, arguments);
+
+            return _getAll.apply(this, args);
+        }
+
+        function getNot(/* key, varValues */) {
+            /*
+            * Returns all objects in the collection which do not match the key and any
+            * of the provided values
+            */
+            
+            var args = [false];
+
+            push.apply(args, arguments);
+
+            return _getAll.apply(this, args);
+        }
+
+        function move(srcIndex, dstIndex) {
+            /*
+            * Moves an item in the collection from one index to another
+            */
+            
+            var baseArray = this._array,
+                len = baseArray.length,
+                k;
+
+            if (dstIndex >= len) {
+                k = dstIndex - len;
+                while ((k--) + 1) {
+                    baseArray.push(undefined);
+                }
+            }
+
+            baseArray.splice(dstIndex, 0, baseArray.splice(srcIndex, 1)[0]);
+
+            return this;
+        }
+
+        function getUnique(/* varKeys */) {
+            return _getUnique.apply(this, arguments);
+        }
+
+        function indexOf(key, value) {
+            /*
+            * Returns the index in the collection of the first match for the key:value pair
+            */
+            
+            var baseArray = this._array,
+                i, len, item, v;
+
+            for (i = 0, len = baseArray.length; i < len; i++) {
+                item = baseArray[i];
+                v = _getProperty(item, key);
+
+                if (v !== undefined && v == value) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        function unique(/* varKeys */) {
+            /*
+            * Filters the collection to only contain objects which contain unique values
+            * for any of the provided values
+            */
+            
+            this._array = _getUnique.apply(this, arguments);
+
+            return this;
+        }
+        
+        function size(key, value) {
+            var baseArray = this._array,
+                i, len = 0;
+
+            if (!arguments.length) {
+                // Returns length of collection
+                return baseArray.length;
+            } else {
+                // Returns number of objects in the collection matching the key:value pair
+                for (i = baseArray.length; i--; ) {
+                    if (_getProperty(baseArray[i], key) == value) {
+                        len++;
+                    }
+                }
+
+                return len;
+            }
+        }
+
+        function pluck(key, uniqueFlag) {
+            /*
+            * Returns an array of values for each item in the collection matching the key
+            * If unique is provided, only unique values will be returned.
+            */
+            
+            var values = [],
+                baseArray = this._array,
+                i, v;
+
+            for (i = baseArray.length; i--; ) {
+                v = _getProperty(baseArray[i], key);
+
+                if (v !== undefined && (!uniqueFlag || _softIndexOf(values, v) === -1)) {
+                    values.push(v);
+                }
+            }
+
+            return values;
+        }
+
+        function lastIndexOf(/*key, value*/) {
+            /*
+            * Returns the index in the collection of the last match for the key:value pair
+            */
+            
+            // TODO: Implement
+        }
+
+        function where(/* key, varValues */) {
+            /*
+            * Filters the collection to only include objects matching the key and 
+            * any of the provided values
+            */
+            
+            var args = [true];
+
+            push.apply(args, arguments);
+
+            return _filterItems.apply(this, args);
+        }
+
+        function ObjectArray(value) {
+            if (!(this instanceof ObjectArray)) {
+                return new ObjectArray(value);
+            }
+
+            if (value && !isArray(value)) {
+                throw new TypeError('Invalid data type for ObjectArray initialization value.');
+            }
+
+            // TODO: Consider implementing more robust type-checking
+            // We're making a pretty big assumption at this point that every element in
+            // `value` (if provided) is an object. On the other hand, to force type
+            // checking every time an ObjectArray is created could produce significant 
+            // wasteful overhead. Consider having type checking enabled by default and
+            // having an optional flag which can disable this.
+
+            this._array = value || [];
+
+            return proxy(this, this._array, null, ARRAY_METHODS);
+        }
+
+        return mdsol.Class(ObjectArray, {
+            contains: contains,
+
+            filter: filter,
+
+            get: get,
+
+            getAll: getAll,
+
+            getNot: getNot,
+
+            getUnique: getUnique,
+
+            indexOf: indexOf,
+
+            lastIndexOf: lastIndexOf,
+
+            move: move,
+
+            pluck: pluck,
+
+            size: size,
+
+            unique: unique,
+
+            value: _value,
+
+            where: where
+        }).valueOf();
+    } ());
+
 // @DONE (2013-09-17 11:06)
 
     /*
@@ -1144,768 +2175,25 @@ mdsol.Class = (function () {
         });
     } ());
 
-/*global extend*/
-
-    /*
-    * Use IIFE to prevent cluttering of globals
-    */
-    (function () {
-        function safeAdd(x, y) {
-            var lsw = (x & 0xFFFF) + (y & 0xFFFF),
-                msw = (x >> 16) + (y >> 16) + (lsw >> 16);
-
-            return (msw << 16) | (lsw & 0xFFFF);
-        }
-
-        function sha1Ft(t, b, c, d) {
-            if (t < 20) {
-                return (b & c) | ((~b) & d);
-            }
-            if (t < 40) {
-                return b ^ c ^ d;
-            }
-            if (t < 60) {
-                return (b & c) | (b & d) | (c & d);
-            }
-            return b ^ c ^ d;
-        }
-
-        function sha1Kt(t) {
-            return (t < 20) ? 1518500249 : (t < 40) ? 1859775393 : (t < 60) ? -1894007588 : -899497514;
-        }
-
-        function bitRol(num, cnt) {
-            return (num << cnt) | (num >>> (32 - cnt));
-        }
-
-        function str2RstrUtf8(input) {
-            var output = '',
-                i = -1,
-                x,
-                y;
-
-            while (++i < input.length) {
-                /* Decode utf-16 surrogate pairs */
-                x = input.charCodeAt(i);
-                y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
-                
-                if (0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF) {
-                    x = 0x10000 + ((x & 0x03FF) << 10) + (y & 0x03FF);
-                    i++;
-                }
-
-                /* Encode output as utf-8 */
-                if (x <= 0x7F) {
-                    output += String.fromCharCode(x);
-                } else if (x <= 0x7FF) {
-                    output += String.fromCharCode(0xC0 | ((x >>> 6) & 0x1F),
-                    0x80 | (x & 0x3F));
-                } else if (x <= 0xFFFF) {
-                    output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F),
-                    0x80 | ((x >>> 6) & 0x3F),
-                    0x80 | (x & 0x3F));
-                } else if (x <= 0x1FFFFF) {
-                    output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07),
-                    0x80 | ((x >>> 12) & 0x3F),
-                    0x80 | ((x >>> 6) & 0x3F),
-                    0x80 | (x & 0x3F));
-                }
-            }
-
-            return output;
-        }
-
-        function binb2Rstr(input) {
-            var output = '',
-                i;
-
-            for (i = 0; i < input.length * 32; i += 8) {
-                output += String.fromCharCode((input[i >> 5] >>> (24 - i % 32)) & 0xFF);
-            }
-
-            return output;
-        }
-
-        function binbSha1(x, len) {
-            var w = [],
-                a = 1732584193,
-                b = -271733879,
-                c = -1732584194,
-                d = 271733878,
-                e = -1009589776,
-                i, j, t,
-                olda, oldb, oldc,
-                oldd, olde;
-
-            /* append padding */
-            x[len >> 5] |= 0x80 << (24 - len % 32);
-            x[((len + 64 >> 9) << 4) + 15] = len;
-
-            for (i = 0; i < x.length; i += 16) {
-                olda = a;
-                oldb = b;
-                oldc = c;
-                oldd = d;
-                olde = e;
-
-                for (j = 0; j < 80; j++) {
-                    if (j < 16) {
-                        w[j] = x[i + j];
-                    } else {
-                        w[j] = bitRol(w[j - 3] ^ w[j - 8] ^ w[j - 14] ^ w[j - 16], 1);
-                    }
-
-                    t = safeAdd(safeAdd(bitRol(a, 5), sha1Ft(j, b, c, d)), safeAdd(safeAdd(e, w[j]), sha1Kt(j)));
-                    e = d;
-                    d = c;
-                    c = bitRol(b, 30);
-                    b = a;
-                    a = t;
-                }
-
-                a = safeAdd(a, olda);
-                b = safeAdd(b, oldb);
-                c = safeAdd(c, oldc);
-                d = safeAdd(d, oldd);
-                e = safeAdd(e, olde);
-            }
-
-            return [a, b, c, d, e];
-        }
-
-        function rstr2Binb(input) {
-            var output = [],
-                i;
-
-            output.length = input.length >> 2;
-            for (i = 0; i < output.length; i++) {
-                output[i] = 0;
-            }
-
-            for (i = 0; i < input.length * 8; i += 8) {
-                output[i >> 5] |= (input.charCodeAt(i / 8) & 0xFF) << (24 - i % 32);
-            }
-
-            return output;
-        }
-
-        function rstrSha1(s) {
-            return binb2Rstr(binbSha1(rstr2Binb(s), s.length * 8));
-        }
-
-        function rstrHmacSha1(key, data) {
-            var bkey = rstr2Binb(key),
-                hash,
-                ipad = [],
-                opad = [],
-                i;
-
-            if (bkey.length > 16) {
-                bkey = binbSha1(bkey, key.length * 8);
-            }
-
-            for (i = 0; i < 16; i++) {
-                ipad[i] = bkey[i] ^ 0x36363636;
-                opad[i] = bkey[i] ^ 0x5C5C5C5C;
-            }
-
-            hash = binbSha1(ipad.concat(rstr2Binb(data)), 512 + data.length * 8);
-
-            return binb2Rstr(binbSha1(opad.concat(hash), 512 + 160));
-        }
-
-        function rstr2Hex(input) {
-            var hexTab = '0123456789ABCDEF',
-                output = '',
-                x,
-                i;
-
-            for (i = 0; i < input.length; i++) {
-                x = input.charCodeAt(i);
-                output += hexTab.charAt((x >>> 4) & 0x0F) + hexTab.charAt(x & 0x0F);
-            }
-            return output;
-        }
-
-        extend(mdsol, {
-            sha1: function (data) {
-                return rstr2Hex(rstrSha1(str2RstrUtf8(data)));
-            },
-
-            hmacSha1: function (key, data) {
-                return rstr2Hex(rstrHmacSha1(str2RstrUtf8(key), str2RstrUtf8(data)));
-            }
-        });
-    } ());
-
-/*global clone,toArray*/
-
-    mdsol.BitFlags = (function () {
-        function BitFlags(flagsObject, initValue) {
-            if (!(this instanceof BitFlags)) {
-                return new BitFlags(flagsObject, initValue);
-            }
-
-            function getMaxValue(flags) {
-                var f, all = 0;
-
-                // Get combined value of all flags
-                for (f in flags) {
-                    if (typeof flags[f] !== 'number') {
-                        all = 0;
-                        break;
-                    }
-
-                    all = all | flags[f];
-                }
-
-                if (!all) {
-                    throw new Error('Invalid bit flag object');
-                }
-
-                return all;
-            }
-
-            /* @flag = name | value */
-            function flagValue(flag) {
-                var value;
-
-                if (typeof flag === 'string') {
-                    // Verify the flag name exists
-                    flag = _flags[flag];
-                    value = flag !== undefined ? flag : null;
-                } else if (typeof flag === 'number') {
-                    // Verify value is a possible valid combination of flags
-                    value = ((flag & _entropy) === flag) ? flag : null;
-                } else {
-                    // Invalid data type
-                    value = null;
-                }
-
-                if (value === null) {
-                    throw new Error('Invalid bit flag value');
-                }
-
-                return value;
-            }
-
-            /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
-            function test(any, flags) {
-                var f, i, match = !any;
-
-                for (i = flags.length; i--;) {
-                    f = flagValue(flags[i]);
-
-                    // Test if the flag is set
-                    if (!match || !any) {
-                        if ((f & _value) === f) {
-                            if (any) {
-                                match = true;
-                            }
-                        } else if (!any) {
-                            match = false;
-                        }
-                    }
-                }
-
-                return match;
-            }
-
-            /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
-            function bitFlags(flags) {
-                var i, value = 0;
-
-                // Combine flag(s) to set
-                for (i = flags.length; i--;) {
-                    value = value | flagValue(flags[i]);
-                }
-
-                return value;
-            }
-
-            var _flags = clone(flagsObject),
-                _entropy = getMaxValue(_flags),
-                _value = initValue !== undefined ? bitFlags(toArray(initValue)) : 0,
-                _public = {
-                    value: function () {
-                        if (arguments.length) {
-                            _value = bitFlags(slice.call(arguments));
-                        }
-
-                        return _value;
-                    },
-
-                    equals: function () {
-                        return _value === bitFlags(slice.call(arguments));
-                    },
-
-                    test: function () {
-                        return test(false, slice.call(arguments));
-                    },
-
-                    testAny: function () {
-                        return test(true, slice.call(arguments));
-                    },
-
-                    toString: function () {
-                        var names = [],
-                            p;
-
-                        // Create array of flag names which are currently set
-                        for (p in _flags) {
-                            // Not using hasOwnProperty since _flags is guaranteed to be a
-                            // simple object literal by getMaxValue() when instantiated
-                            if (test(true, p)) {
-                                names.push(p);
-                            }
-                        }
-
-                        return names.toString();
-                    },
-
-                    valueOf: function () {
-                        return _flags;
-                    }
-                };
-
-            return mdsol.Class(this, _public).valueOf();
-        }
-
-        return BitFlags;
-    }());
-
-/*global clone*/
-
-    mdsol.Enum = (function () {
-        function Enum(enumObj, initValue) {
-            if (!(this instanceof Enum)) {
-                return new Enum(enumObj, initValue);
-            }
-
-            function getValues(o) {
-                var values = [], p;
-
-                for (p in o) {
-                    if (typeof o[p] !== 'number') {
-                        values = [];
-                        break;
-                    }
-
-                    values.push(o[p]);
-                }
-
-                if (!values.length) {
-                    throw new Error('Invalid enum object');
-                }
-
-                return values;
-            }
-
-            function enumValue(v) {
-                if (v === null) {
-                    return null;
-                } else if (typeof v === 'string' && _enum[v] !== undefined) {
-                    // Verify it is a valid enum name (see: http://jsperf.com/hasownproperty-vs-in-vs-other/)
-                    return _enum[v];
-                } else if (typeof v === 'number' && _all.indexOf(v) !== -1) {
-                    // Verify it is a valid enum value
-                    return v;
-                }
-
-                throw new Error('Invalid enum value');
-            }
-
-            var _all = getValues(enumObj),
-                _enum = clone(enumObj),
-                _value = initValue !== undefined ? enumValue(initValue) : null,
-                _public = {
-                    value: function (value) {
-                        if (arguments.length) {
-                            _value = enumValue(value);
-                        }
-
-                        return _value;
-                    },
-
-                    test: function (value) {
-                        return _value === enumValue(value);
-                    },
-
-                    toString: function () {
-                        var p;
-
-                        for (p in _enum) {
-                            // Not using hasOwnProperty since _enum is guaranteed to be a
-                            // simple object literal by getValues() when instantiated
-                            if (_enum[p] === _value) {
-                                return p;
-                            }
-                        }
-
-                        return null;
-                    },
-
-                    valueOf: function () {
-                        return _enum;
-                    }
-                };
-
-            return mdsol.Class(this, _public).valueOf();
-        }
-
-        return Enum;
-    }());
-
-/*global proxy,toArray*/
-
-    mdsol.ObjectArray = (function () {
-        var ARRAY_METHODS = ['pop', 'push', 'reverse', 'shift', 'sort', 'splice', 'unshift', 'slice'],
-            _softIndexOf = function(arr, value) {
-                var i, len;
-
-                // Return the index of the first match for `value` within the
-                // array. Strict comparison is not used.
-
-                for (i = 0, len = arr.length; i < len; i++) {
-                    if (arr[i] == value) {
-                        return i;
-                    }
-                }
-
-                return -1;
-            },
-            _getProperty = function(obj, identifier) {
-                var a = identifier.split('.'),
-                    item = obj,
-                    i, len;
-
-                for (i = 0, len = a.length; i < len && item; i++) {
-                    item = a[i] in item ? item[a[i]] : undefined;
-                }
-
-                return item;
-            },
-            _filterItems = function(inclusive, prop/*, varValue*/) {
-                var args = slice.call(arguments, 2),
-                    exclude = !inclusive,
-                    baseArray = this._array,
-                    values,
-                    v, i;
-
-                values = isArray(args[0]) ? args[0] : toArray(args);
-
-                for (i = baseArray.length; i--;) {
-                    v = _getProperty(baseArray[i], prop);
-
-                    if (!!(exclude ^ !(v !== undefined && _softIndexOf(values, v) !== -1))) {
-                        baseArray.splice(i, 1);
-                    }
-                }
-
-                return this;
-            },
-            _getAll = function(inclusive, prop/*, varValue */) {
-                var args = slice.call(arguments, 2),
-                    baseArray = this._array,
-                    exclude = !inclusive,
-                    values,
-                    result = [],
-                    item, v, i;
-
-                values = isArray(args[0]) ? args[0] : toArray(args);
-
-                for (i = baseArray.length; i--;) {
-                    item = baseArray[i];
-                    v = _getProperty(item, prop);
-
-                    if (!!(exclude ^ (v !== undefined && _softIndexOf(values, v) !== -1))) {
-                        result.push(item);
-                    }
-                }
-
-                return result;
-            },
-            _getUnique = function(/* varKey */) {
-                var props = slice.call(arguments),
-                    baseArray = this._array,
-                    item, i, j,
-                    exists,
-                    result = [];
-
-                for (i = baseArray.length; i--;) {
-                    item = baseArray[i];
-
-                    exists = result.some(function (e) {
-                        for (j = props.length - 1, exists = false; j >= 0 && !exists; j--) {
-                            exists = item[props[j]] === e[props[j]];
-                        }
-
-                        return exists;
-                    });
-
-                    if (!exists) {
-                        result.push(item);
-                    }
-                }
-
-                return result;
-            };
-
-        function contains(key, value) {
-            // Returns true if any objects in the collection match the key:value pair
-            var baseArray = this._array,
-            i, exists = false;
-
-            // Determine if at least on item with the property/value pair exists
-            for (i = baseArray.length - 1; i >= 0 && !exists; i--) {
-                exists = baseArray[i][key] == value;
-            }
-
-            return exists;
-        }
-
-        function filter(/*key, varValues*/) {
-            // Filters the collection to exclude all objects matching the key and 
-            // and any of the provided values
-            var args = [false];
-
-            push.apply(args, arguments);
-
-            return _filterItems.apply(this, args);
-        }
-
-        function get(key, value) {
-            var baseArray = this._array,
-                    i, item, v;
-
-            for (i = baseArray.length; i--; ) {
-                item = baseArray[i];
-                v = _getProperty(item, key);
-
-                if (value !== undefined && v == value) {
-                    return item;
-                }
-            }
-
-            return null;
-        }
-
-        function getAll(/* key, varValues */) {
-            var args = [true];
-
-            push.apply(args, arguments);
-
-            return _getAll.apply(this, args);
-        }
-
-        function getNot(/* key, varValues */) {
-            var args = [false];
-
-            push.apply(args, arguments);
-
-            return _getAll.apply(this, args);
-        }
-
-        function move(srcIndex, dstIndex) {
-            var baseArray = this._array,
-                    len = baseArray.length,
-                    k;
-
-            if (dstIndex >= len) {
-                k = dstIndex - len;
-                while ((k--) + 1) {
-                    baseArray.push(undefined);
-                }
-            }
-
-            baseArray.splice(dstIndex, 0, baseArray.splice(srcIndex, 1)[0]);
-
-            return this;
-        }
-
-        function getUnique(/* varKeys */) {
-            return _getUnique.apply(this, arguments);
-        }
-
-        function indexOf(key, value) {
-            var baseArray = this._array,
-                    i, len, item, v;
-
-            for (i = 0, len = baseArray.length; i < len; i++) {
-                item = baseArray[i];
-                v = _getProperty(item, key);
-
-                if (v !== undefined && v == value) {
-                    return i;
-                }
-            }
-
-            return -1;
-        }
-        
-        function unique(/* varKeys */) {
-            this._array = _getUnique.apply(this, arguments);
-
-            return this;
-        }
-        
-        function size(key, value) {
-            var baseArray = this._array,
-                    i, len = 0;
-
-            if (!arguments.length) {
-                // Returns length of collection
-                return baseArray.length;
-            } else {
-                // Returns number of objects in the collection matching the key:value pair
-                for (i = baseArray.length; i--; ) {
-                    if (_getProperty(baseArray[i], key) == value) {
-                        len++;
-                    }
-                }
-
-                return len;
-            }
-        }
-
-        function baseValue(value) {
-            if (!arguments.length) {
-                // Returns the collection
-                return this._array;
-            } else {
-                // Sets the collection
-                this._array = value;
-            }
-
-            return this;
-        }
-
-        function where(/* key, varValues */) {
-            var args = [true];
-
-            push.apply(args, arguments);
-
-            return _filterItems.apply(this, args);
-        }
-
-        function pluck(key, uniqueFlag) {
-            var values = [],
-                    baseArray = this._array,
-                    i, v;
-
-            for (i = baseArray.length; i--; ) {
-                v = _getProperty(baseArray[i], key);
-
-                if (v !== undefined && (!uniqueFlag || _softIndexOf(values, v) === -1)) {
-                    values.push(v);
-                }
-            }
-
-            return values;
-        }
-
-        function lastIndexOf(/*key, value*/) {
-            // TODO: Implement
-        }
-
-        function ObjectArray(value) {
-            if (!(this instanceof ObjectArray)) {
-                return new ObjectArray(value);
-            }
-
-            if (value && !isArray(value)) {
-                throw new TypeError('Invalid data type for ObjectArray initialization value.');
-            }
-
-            // TODO: Consider implementing more robust type-checking
-            // We're making a pretty big assumption at this point that every element in
-            // `value` (if provided) is an object. On the other hand, to force type
-            // checking every time an ObjectArray is created could produce significant 
-            // wasteful overhead. Consider having type checking enabled by default and
-            // having an optional flag which can disable this.
-
-            this._array = value || [];
-
-            return proxy(this, this._array, null, ARRAY_METHODS);
-        }
-
-        return mdsol.Class(ObjectArray, {
-            contains: contains,
-
-            filter: filter,
-
-            /*
-            * Returns the first object in the collection which matches the key:value pair
-            */
-            get: get,
-
-            /*
-            * Returns all objects in the collection which match the key and any of the 
-            * provided values
-            */
-            getAll: getAll,
-
-            /*
-            * Returns all objects in the collection which do not match the key and any
-            * of the provided values
-            */
-            getNot: getNot,
-
-            getUnique: getUnique,
-
-            /*
-            * Returns the index in the collection of the first match for the key:value pair
-            */
-            indexOf: indexOf,
-
-            /*
-            * Returns the index in the collection of the last match for the key:value pair
-            */
-            lastIndexOf: lastIndexOf,
-
-            /*
-            * Moves an item in the collection from one index to another
-            */
-            move: move,
-
-            /*
-            * Returns an array of values for each item in the collection matching the key
-            * If unique is provided, only unique values will be returned.
-            */
-            pluck: pluck,
-
-            size: size,
-
-            /*
-            * Filters the collection to only contain objects which contain unique values
-            * for any of the provided values
-            */
-            unique: unique,
-
-            value: baseValue,
-
-            /*
-            * Filters the collection to only include objects matching the key and 
-            * any of the provided values
-            */
-            where: where
-        }).valueOf();
-    } ());
-
-
     mdsol.Class.namespace('mdsol.abstract', {
         api: (function () {
             function apiGetMethod(name) {
-                if (!this._methods.hasOwnProperty(name)) {
+                var methods = this._methods;
+                
+                if (!methods) {
+                    this._methods = methods = {};
+                }
+
+                if (!methods.hasOwnProperty(name)) {
                     throw new Error('Unknown method: "' + name + '"');
                 }
 
-                return this._methods[name];
+                return methods[name];
             }
 
             function apiMethods(value) {
                 if (!arguments.length) {
-                    return this._methods;
+                    return this._methods || {};
                 }
 
                 this._methods = value;
@@ -1914,24 +2202,25 @@ mdsol.Class = (function () {
             }
 
             return {
-                _methods: {},
-
                 apiMethods: apiMethods,
 
                 apiGetMethod: apiGetMethod
             };
-        })
+        } ())
     });
-
 
     mdsol.Class.namespace('mdsol.abstract', {
         options: (function() {
-
             function options() {
                 var o = this._options,
                     setter = this._setOption,
                     key, value, p, ret;
 
+                // If `_options` does not yet exist on object instance, create it
+                if (!o) {
+                    this._options = o = {};
+                }
+                
                 if (arguments.length) {
                     key = arguments[0];
                     if (isString(key)) {
@@ -1987,8 +2276,6 @@ mdsol.Class = (function () {
                 return this;
             }
 
-            ;
-
             function initialize(values) {
                 var defaultOpts = this.constructor._options || {};
 
@@ -1999,8 +2286,6 @@ mdsol.Class = (function () {
                 return this;
             }
 
-            ;
-
             function setOption(key, value) {
                 // Default method - returns value to be set for key.
                 // This method should be defined in the implementing object
@@ -2009,8 +2294,6 @@ mdsol.Class = (function () {
             }
 
             return {
-                _options: {},
-
                 _setOption: setOption,
 
                 options: extend(options, {
@@ -2019,13 +2302,11 @@ mdsol.Class = (function () {
                     initialize: initialize
                 })
             };
-        })
+        }())
     });
-
 
     mdsol.Class.namespace('mdsol.abstract', {
         control: (function() {
-
             function enable() {
                 this.options('enabled', true);
             }
@@ -2051,58 +2332,65 @@ mdsol.Class = (function () {
 
                 hide: hide
             });
-        })
+        }())
     });
 
-
     mdsol.Class.namespace('mdsol.abstract', {
-        subscribable: (function() {
-
+        subscribable: (function () {
             function subscribe(msg, func, priority) {
-                var messages = this._messages;
+                var m = this._messages;
 
                 if (!isString(msg) || !isFunction(func)) {
                     throw new TypeError('Invalid data type for subscription message or callback');
                 }
 
-                if (!messages[msg]) {
-                    messages[msg] = [];
+                if (!m) {
+                    this._messages = m = {};
                 }
 
-                messages[msg].push({ priority: priority || 0, callback: func });
+                if (!m[msg]) {
+                    m[msg] = [];
+                }
 
-                return mdsol;
+                m[msg].push({ priority: priority || 0, callback: func });
+
+                return this;
             }
 
             function unsubscribe(msg, func) {
-                var messages = this._messages,
+                var m = this._messages,
                     i;
 
                 if (!isString(msg) || (func && !isFunction(func))) {
                     throw new TypeError('Invalid data type for subscription message or callback');
                 }
 
-                if (!messages.hasOwnProperty(msg)) {
+                if (!m) {
+                    this._messages = m = {};
+                }
+
+                if (!m.hasOwnProperty(msg)) {
                     throw new Error('Message does not exist.');
                 }
 
                 if (!func) {
-                    delete messages[msg];
+                    delete m[msg];
                 } else {
-                    messages = messages[msg];
-                    for (i = messages.length; i--;) {
-                        if (messages[i].func === func) {
-                            messages.splice(i, 1);
+                    m = m[msg];
+                    for (i = m.length; i--; ) {
+                        if (m[i].func === func) {
+                            m.splice(i, 1);
                             break;
                         }
                     }
                 }
 
-                return mdsol;
+                return this;
             }
 
             function publish(msg, data) {
-                var subscribers,
+                var m = this._messages,
+                    subscribers,
                     msgData = data,
                     result,
                     s;
@@ -2111,9 +2399,13 @@ mdsol.Class = (function () {
                     throw new TypeError('Invalid data type for subscription message');
                 }
 
+                if (!m) {
+                    this._messages = m = {};
+                }
+
                 // Sort the subscribers by priority
-                subscribers = clone(this._messages[msg])
-                    .sort(function(a, b) {
+                subscribers = clone(m[msg])
+                    .sort(function (a, b) {
                         return (a.priority > b.priority)
                             ? 1
                             : (a.priority < b.priority)
@@ -2137,18 +2429,15 @@ mdsol.Class = (function () {
             }
 
             return {
-                _messages: {},
-
                 subscribe: subscribe,
 
                 unsubscribe: unsubscribe,
 
                 publish: publish
             };
-        })
+        } ())
     });
 
-/*global namespace*/
 // @DONE (2013-09-17 12:22)
 
     /*
@@ -2160,12 +2449,12 @@ mdsol.Class = (function () {
         }
 
         function center($element, parent) {
-            parent = parent ? $element.parent() : $(window);
+            var $p = parent ? $element.parent() : $(window);
 
             $element.css({
-                "position": "absolute",
-                "top": (Math.max(((parent.height() - $element.outerHeight()) / 2) + parent.scrollTop(), 0) + "px"),
-                "left": (Math.max(((parent.width() - $element.outerWidth()) / 2) + parent.scrollLeft(), 0) + "px")
+                'position': 'absolute',
+                'top': (Math.max(((parent.height() - $element.outerHeight()) / 2) + $p.scrollTop(), 0) + 'px'),
+                'left': (Math.max(((parent.width() - $element.outerWidth()) / 2) + $p.scrollLeft(), 0) + 'px')
             });
 
             return $element;
@@ -2177,7 +2466,6 @@ mdsol.Class = (function () {
             dispose: dispose
         });
     } ());
-
 
     mdsol.ui.DialogBox = (function () {
         function DialogBox() {
@@ -2191,7 +2479,6 @@ mdsol.Class = (function () {
         return DialogBox;
     } ());
 
-
     mdsol.ui.DialogPage = (function () {
         function DialogPage() {
             if (!(this instanceof DialogPage)) {
@@ -2204,10 +2491,7 @@ mdsol.Class = (function () {
         return DialogPage;
     } ());
 
-
     mdsol.ui.DialogSubpage = (function () {
-        'use strict';
-
         function DialogSubpage() {
             if (!(this instanceof DialogSubpage)) {
                 return new DialogSubpage();
@@ -2219,10 +2503,7 @@ mdsol.Class = (function () {
         return DialogSubpage;
     } ());
 
-
     mdsol.ui.Dropdown = (function () {
-        'use strict';
-
         function Dropdown() {
             if (!(this instanceof Dropdown)) {
                 return new Dropdown();
@@ -2234,10 +2515,7 @@ mdsol.Class = (function () {
         return Dropdown;
     } ());
 
-
     mdsol.ui.DropdownMenu = (function () {
-        'use strict';
-
         function DropdownMenu() {
             if (!(this instanceof DropdownMenu)) {
                 return new DropdownMenu();
@@ -2249,10 +2527,7 @@ mdsol.Class = (function () {
         return DropdownMenu;
     } ());
 
-
     mdsol.ui.DropdownSelect = (function () {
-        'use strict';
-
         function DropdownSelect() {
             if (!(this instanceof DropdownSelect)) {
                 return new DropdownSelect();
@@ -2264,10 +2539,7 @@ mdsol.Class = (function () {
         return DropdownSelect;
     } ());
 
-
     mdsol.ui.MessageBox = (function () {
-        'use strict';
-
         var _buttonEnum = {
             OK: 1
         };
@@ -2285,7 +2557,209 @@ mdsol.Class = (function () {
         return MessageBox;
     } ());
 
-/*global noop,makeArray,clone,isFunction,isArray,extend*/
+// @DONE (2013-09-17 11:11)
+
+    /*
+    * Use IIFE to prevent cluttering of globals
+    */
+    (function () {
+        var SESSION_SERVICE = 'Sessions',
+            _method = mdsol.ajax.Method,
+            _methods = {
+                userLogout: _method(SESSION_SERVICE, 'UserLogout', 'session_id'),
+                userLogin: _method(SESSION_SERVICE, 'UserLogin')
+                    .params('username', 'password_hash'),
+                resumeSession: _method(SESSION_SERVICE, 'ResumeSession')
+                    .params('session_id', 'username'),
+                guestLogin: _method(SESSION_SERVICE, 'GuestLogin'),
+                getUserLoginToken: _method(SESSION_SERVICE, 'UserGetLoginToken', 'username'),
+                getNextSaltValue: _method(SESSION_SERVICE, 'GetNextSaltValue')
+            },
+            _user = null;
+
+        function getSessionCookie() {
+            var value = mdsol.getCookie('metabaselogin'),
+                cookie = null,
+                raw, a;
+
+            raw = value && mdsol.decodeBase64(value);
+            if (raw) {
+                a = raw.split('/');
+
+                try {
+                    cookie = {
+                        username: a[0],
+                        session_id: a[1],
+                        expires: new Date(parseInt(a[2], 10))
+                    };
+                } catch (e) {
+                    cookie = null;
+                }
+            }
+
+            return cookie;
+        };
+
+        function initialize() {
+            var cookie;
+
+            // 1. Check for presence of login cookie
+            cookie = getSessionCookie();
+            // 2. If the session stored in the cookie has not yet expired:
+            if (cookie && cookie.username.length && cookie.username !== 'guest' && cookie.expires > now()) {
+                // 2a. Attempt to resume the session.
+                // 2a1. If successful, go to step 4 
+            }
+
+            /*
+            3. Else, attempt to login as guest user.
+            3a. If successful, go to step 4 
+            3b. Else, if failure:
+            3b1. Alert user the system is currently unavailable
+            3b2. Terminate
+            4. Create the new user session
+            4a. Set the user information (see action F - SETTING USER INFORMATION)
+            4b. Set the user access (see action D - SETTING USER ACCESS)
+            5. Initialize the navigation bar
+            6. Attempt to load the products
+            7. Attempt to load the dialogs
+            */
+        }
+
+        function login(username, password) {
+            this.publish('beforeLogin', { username: username });
+
+        }
+
+        function logout() {
+            this.publish('beforeLogout', { user: _user });
+
+        }
+
+        function isAdmin() {
+
+        }
+
+        function getUserData() {
+
+        }
+
+        function getDialogAccess() {
+
+        }
+
+        function getDataObjectAccess() {
+
+        }
+
+        function getSubDataObjectAccess() {
+
+        }
+
+        function dispose() {
+            return mdsol;
+        }
+
+        function onTokenLoaded(success, data, xhrMethod) {
+            var apiLogin;
+
+            if (success && data && data.length) {
+
+            } else {
+                apiLogin = this.apiGetMethod('userLogin');
+                
+                _user.login_token = data[0].login_token;
+                _user.salt = data[0].salt;
+                _user.password = mdsol.sha1(_user.password + _user.salt);
+                
+                apiLogin.execute(onLogin, _user.username, mdsol.sha1(_user.password + _user.login_token));
+            }
+        }
+
+        function onLogin(success, data, xhrMethod) {
+            if (success) {
+                // TODO: Implement
+
+                this.publish('afterLogin', { _user: _user });
+            } else {
+                // TODO: Implement
+            }
+        }
+
+        function onLogout(success, data, xhrMethod) {
+            var username = _user.username;
+
+            // TODO: Implement
+
+            this.publish('afterLogout', { username: username });
+        }
+
+        var session = mdsol.Class.implement(['subscribable', 'api'], {
+            initialize: initialize,
+
+            login: login,
+
+            logout: logout,
+
+            isAdmin: isAdmin,
+
+            getUserData: getUserData,
+
+            getDialogAccess: getDialogAccess,
+
+            getDataObjectAccess: getDataObjectAccess,
+
+            getSubDataObjectAccess: getSubDataObjectAccess,
+
+            dispose: dispose
+        });
+
+        session.apiMethods(_methods);
+
+        // Expose public members
+        mdsol.Class.namespace('mdsol.session', session);
+    } ());
+
+    /*
+    * Use IIFE to prevent cluttering of globals
+    *
+    * NOTE: This module requires jQuery, however it should not be listed as an AMD module 
+    *       dependency. Only build-time dependencies should be listed above.
+    */
+    (function () {
+        function addMenu() {
+
+        }
+
+        function removeMenu() {
+
+        }
+
+        function getMenu() {
+
+        }
+
+        function dispose() {
+            return mdsol;
+        }
+
+        mdsol.session.subscribe('afterLogout', onLogout);
+        
+        function onLogout() {
+            // Reset all of the menus
+        }
+        
+        // Expose public members
+        mdsol.Class.namespace('mdsol.toolbar', {
+            addMenu: addMenu,
+
+            removeMenu: removeMenu,
+
+            getMenu: getMenu,
+
+            dispose: dispose
+        });
+    } ());
 
     mdsol.ajax.Method = (function () {
         var BASE_URL = 'http://dlcdkpcs1.ad.mdsol.com/api/Services/',
@@ -2326,11 +2800,13 @@ mdsol.Class = (function () {
 
             if (arguments.length === 1) {
                 value = arguments[0];
-                this._params = value === null ? [] : toArray(value);
+                value = value === null ? [] : toArray(value);
             } else {
-                this._params = makeArray(arguments);
+                value = makeArray(arguments);
             }
-
+            
+            this._params = value;
+            
             return this;
         }
 
@@ -2505,7 +2981,7 @@ mdsol.Class = (function () {
 
                 _params: toArray(parameters) || [],
 
-                _callback: noop,
+                _callback: null,
 
                 status: mdsol.BitFlags(_statusFlags, 'NONE')
             });
@@ -2528,11 +3004,9 @@ mdsol.Class = (function () {
         }).valueOf();
     } ());
 
-/*global merge,toArray,makeArray*/
-
     mdsol.ajax.RequestMethod = (function () {
         var DEFAULT_PARAMS = ['audit_info', 'field_filter'];
-        
+
         function audit(value) {
             if (!arguments.length) {
                 return this._audit;
@@ -2552,32 +3026,32 @@ mdsol.Class = (function () {
 
             if (arguments.length === 1) {
                 value = arguments[0];
-                this._fields = value === null ? [] : toArray(value);
+                value = value === null ? [] : toArray(value);
             } else {
-                this._fields = makeArray(arguments);
+                value = makeArray(arguments);
             }
-
+            
+            this._fields = value;
+            
             return this;
         }
 
         function params() {
             var curParams, value,
-                args = [];
+                args;
 
             if (!arguments.length) {
                 curParams = this.base();
 
                 // Get params from base; exclude defaul parameters
-                return curParams.filter(function(el/*, idx, arr*/) {
+                return curParams.filter(function (el/*, idx, arr*/) {
                     return DEFAULT_PARAMS.indexOf(el) === -1;
                 });
             }
 
             if (arguments.length === 1) {
                 value = arguments[0];
-                if (value !== null) {
-                    args = toArray(value);
-                }
+                args = value === null ? [] : toArray(value);
             } else {
                 args = makeArray(arguments);
             }
@@ -2594,11 +3068,11 @@ mdsol.Class = (function () {
 
             return this.base.apply(this, args);
         }
-        
-        function dispose() {
 
+        function dispose() {
+            // TODO: Implement
         }
-            
+
         function RequestMethod(service, method, reqParams) {
             if (!(this instanceof RequestMethod)) {
                 return new RequestMethod(service, method, reqParams);
@@ -2606,333 +3080,103 @@ mdsol.Class = (function () {
 
             return extend(this, {
                     _audit: false,
-                    
+
                     _fields: []
-                }).base(service, method, toArray(reqParams).concat(DEFAULT_PARAMS));
+                })
+                .base(service, method)
+                .params(reqParams || []);
         }
 
         return mdsol.Class(RequestMethod, {
                 audit: audit,
-            
+
                 fields: fields,
-            
+
                 params: params,
-            
+
                 execute: execute,
-                
+
                 dispose: dispose
             })
             .inherits(mdsol.ajax.Method)
             .valueOf();
     } ());
 
-/*global namespace,extend*/
-// @DONE (2013-09-17 11:11)
-
-    /*
-    * Use IIFE to prevent cluttering of globals
-    */
-    (function () {
-        var SESSION_SERVICE = 'Sessions',
-            _method = mdsol.ajax.Method,
-            _methods = {
-                userLogout: _method(SESSION_SERVICE, 'UserLogout', 'session_id'),
-                userLogin: _method(SESSION_SERVICE, 'UserLogin')
-                    .params('username', 'password_hash'),
-                resumeSession: _method(SESSION_SERVICE, 'ResumeSession')
-                    .params('session_id', 'username'),
-                guestLogin: _method(SESSION_SERVICE, 'GuestLogin'),
-                getUserLoginToken: _method(SESSION_SERVICE, 'UserGetLoginToken', 'username'),
-                getNextSaltValue: _method(SESSION_SERVICE, 'GetNextSaltValue')
-            },
-            _user = null;
-
-        function getSessionCookie() {
-            var value = mdsol.getCookie('metabaselogin'),
-                cookie = null,
-                raw, a;
-
-            raw = value && mdsol.decodeBase64(value);
-            if (raw) {
-                a = raw.split('/');
-
-                try {
-                    cookie = {
-                        username: a[0],
-                        session_id: a[1],
-                        expires: new Date(parseInt(a[2], 10))
-                    };
-                } catch (e) {
-                    cookie = null;
-                }
-            }
-
-            return cookie;
-        };
-
-        function initialize() {
-            var cookie;
-
-            // 1. Check for presence of login cookie
-            cookie = getSessionCookie();
-            // 2. If the session stored in the cookie has not yet expired:
-            if (cookie && cookie.username.length && cookie.username !== 'guest' && cookie.expires > now()) {
-                // 2a. Attempt to resume the session.
-                // 2a1. If successful, go to step 4 
-            }
-
-            /*
-            3. Else, attempt to login as guest user.
-            3a. If successful, go to step 4 
-            3b. Else, if failure:
-            3b1. Alert user the system is currently unavailable
-            3b2. Terminate
-            4. Create the new user session
-            4a. Set the user information (see action F - SETTING USER INFORMATION)
-            4b. Set the user access (see action D - SETTING USER ACCESS)
-            5. Initialize the navigation bar
-            6. Attempt to load the products
-            7. Attempt to load the dialogs
-            */
-        }
-
-        function login(username, password) {
-            this.publish('beforeLogin', { username: username });
-
-        }
-
-        function logout() {
-            this.publish('beforeLogout', { user: _user });
-
-        }
-
-        function isAdmin() {
-
-        }
-
-        function getUserData() {
-
-        }
-
-        function getDialogAccess() {
-
-        }
-
-        function getDataObjectAccess() {
-
-        }
-
-        function getSubDataObjectAccess() {
-
-        }
-
-        function dispose() {
-            return mdsol;
-        }
-
-        function onTokenLoaded(success, data, xhrMethod) {
-            var apiLogin;
-
-            if (success && data && data.length) {
-
-            } else {
-                apiLogin = this.apiGetMethod('userLogin');
-                
-                _user.login_token = data[0].login_token;
-                _user.salt = data[0].salt;
-                _user.password = mdsol.sha1(_user.password + _user.salt);
-                
-                apiLogin.execute(onLogin, _user.username, mdsol.sha1(_user.password + _user.login_token));
-            }
-        }
-
-        function onLogin(success, data, xhrMethod) {
-            if (success) {
-                // TODO: Implement
-
-                this.publish('afterLogin', { _user: _user });
-            } else {
-                // TODO: Implement
-            }
-        }
-
-        function onLogout(success, data, xhrMethod) {
-            var username = _user.username;
-
-            // TODO: Implement
-
-            this.publish('afterLogout', { username: username });
-        }
-
-        var session = mdsol.Class.implement(['subscribable', 'api'], {
-            initialize: initialize,
-
-            login: login,
-
-            logout: logout,
-
-            isAdmin: isAdmin,
-
-            getUserData: getUserData,
-
-            getDialogAccess: getDialogAccess,
-
-            getDataObjectAccess: getDataObjectAccess,
-
-            getSubDataObjectAccess: getSubDataObjectAccess,
-
-            dispose: dispose
-        });
-
-        session.apiMethods(_methods);
-
-        // Expose public members
-        mdsol.Class.namespace('mdsol.session', session);
-    } ());
-
-/*global clone,isFunction,toArray*/
-
     mdsol.ajax.UpsertMethod = (function () {
         var DEFAULT_PARAMS = ['session_id', 'field_data'];
 
-        function UpsertMethod(service, method, params) {
-            if (!(this instanceof UpsertMethod)) {
-                return new UpsertMethod(service, method, params);
+        function params() {
+            var curParams, value,
+                args;
+
+            if (!arguments.length) {
+                curParams = this.base();
+
+                // Get params from base; exclude defaul parameters
+                return curParams.filter(function (el/*, idx, arr*/) {
+                    return DEFAULT_PARAMS.indexOf(el) === -1;
+                });
             }
 
-            var _public = {
-                params: function () {
-                    var curParams, value,
-                        args = [];
+            if (arguments.length === 1) {
+                value = arguments[0];
+                args = value === null ? [] : toArray(value);
+            } else {
+                args = makeArray(arguments);
+            }
 
-                    if (!arguments.length) {
-                        curParams = this.base();
+            push.apply(args, DEFAULT_PARAMS);
 
-                        // Get params from base; exclude defaul parameters
-                        return curParams.filter(function (el/*, idx, arr*/) {
-                            return DEFAULT_PARAMS.indexOf(el) === -1;
-                        });
-                    }
-
-                    if (arguments.length === 1) {
-                        value = arguments[0];
-                        if (value !== null) {
-                            args = toArray(value);
-                        }
-                    } else {
-                        args = makeArray(arguments);
-                    }
-
-                    push.apply(args, DEFAULT_PARAMS);
-
-                    return this.base.apply(this, args);
-                },
-
-                execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
-                    // TODO: Check that we are correctly referencing the session ID
-                    var token = mdsol.session.dbUser.session_id,
-                        fieldData = '',
-                        args = [];
-
-                    if (arguments.length && !isFunction(arguments[0])) {
-                        fieldData = arguments[0];
-                        push.apply(args, arguments);
-                    }
-
-                    push.apply(args, [token, fieldData]);
-
-                    return this.base.apply(this, args);
-                },
-
-                dispose: function () {
-                    // Perform any cleanup
-                }
-            };
-
-            return extend(this, _public)
-                .base(service, method, toArray(params).concat(DEFAULT_PARAMS));
+            return this.base.apply(this, args);
         }
 
-        return mdsol.Class(UpsertMethod)
+        function execute(/* [apiParamVal1][, apiParamVal2][, ...] */) {
+            // TODO: Check that we are correctly referencing the session ID
+            var token = mdsol.session.dbUser.session_id,
+                fieldData = '',
+                args = [];
+
+            if (arguments.length && !isFunction(arguments[0])) {
+                fieldData = arguments[0];
+                push.apply(args, arguments);
+            }
+
+            push.apply(args, [token, fieldData]);
+
+            return this.base.apply(this, args);
+        }
+
+        function UpsertMethod(service, method, upParams) {
+            if (!(this instanceof UpsertMethod)) {
+                return new UpsertMethod(service, method, upParams);
+            }
+
+            function dispose() {
+                // Perform any cleanup
+            }
+
+            return extend(this, {
+                dispose: dispose
+            })
+                .base(service, method)
+                .params(upParams || []);
+        }
+
+        return mdsol.Class(UpsertMethod, {
+            params: params,
+
+            execute: execute
+        })
             .inherits(mdsol.ajax.Method)
             .valueOf();
     } ());
 
-/*global namespace,extend*/
-// @DONE (2013-09-17 11:11)
-
-    /*
-    * Use IIFE to prevent cluttering of globals
-    */
-    (function () {
-        function clear() {
-            return mdsol;
-        }
-        
-        function dispose() {
-            return mdsol;
-        }
-
-        mdsol.Class.namespace('mdsol.schema', {
-            clear: clear,
-
-            dispose: dispose
-        });
-    } ());
-
-
-    mdsol.schema.Field = (function () {
-        function Field() {
-            if (!(this instanceof Field)) {
-                return new Field();
-            }
-
-            return this;
-        }
-
-        return Field;
-    } ());
-
-
-    (function () {
-        
-        
-    } ());
-
-
-    mdsol.schema.Table = (function () {
-        function Table() {
-            if (!(this instanceof Table)) {
-                return new Table();
-            }
-
-            return this;
-        }
-
-        return Table;
-    } ());
-
-
-    mdsol.schema.TitleBar = (function () {
-        function TitleBar() {
-            if (!(this instanceof TitleBar)) {
-                return new TitleBar();
-            }
-
-            return this;
-        }
-
-        return TitleBar;
-    } ());
-
-/*global isEmpty,isFunction,namespace,extend*/
-
     /*
     * Use IIFE to prevent cluttering of globals
     */
     (function () {
         function dispose() {
-
+            // TODO: Implement
         }
         
         // Expose public members
@@ -2940,7 +3184,6 @@ mdsol.Class = (function () {
             dispose: dispose
         });
     } ());
-
 
     mdsol.data.DataTable = (function () {
         function load() {
@@ -3049,8 +3292,6 @@ mdsol.Class = (function () {
             .valueOf();
     } ());
 
-/*global merge,toArray,makeArray*/
-
     mdsol.data.clients = (function () {
         var SERVICE = 'Clients',
             TEMPLATE = {
@@ -3069,8 +3310,6 @@ mdsol.Class = (function () {
 
         return mdsol.Class.implement('subscribable', clients);
     } ());
-
-/*global merge,toArray,makeArray*/
 
     mdsol.data.dialogs = (function () {
         var SERVICE = 'Dialogs',
@@ -3098,8 +3337,6 @@ mdsol.Class = (function () {
 
         return mdsol.Class.implement('subscribable', dialogs);
     } ());
-
-/*global merge,toArray,makeArray*/
 
     mdsol.data.fields = (function () {
         var SERVICE = 'Fields',
@@ -3144,8 +3381,6 @@ mdsol.Class = (function () {
         return mdsol.Class.implement('subscribable', fields);
     } ());
 
-/*global merge,toArray,makeArray*/
-
     mdsol.data.keys = (function () {
         var SERVICE = 'ForeignKeys',
             TEMPLATE = {
@@ -3186,8 +3421,6 @@ mdsol.Class = (function () {
         return mdsol.Class.implement('subscribable', foreignKeys);
     } ());
 
-/*global merge,toArray,makeArray*/
-
     mdsol.data.products = (function () {
         var SERVICE = 'Products',
             TEMPLATE = {
@@ -3206,8 +3439,6 @@ mdsol.Class = (function () {
 
         return mdsol.Class.implement('subscribable', products);
     } ());
-
-/*global merge,toArray,makeArray*/
 
     mdsol.data.roleAcls = (function () {
         var SERVICE = 'Roles',
@@ -3240,8 +3471,6 @@ mdsol.Class = (function () {
         return mdsol.Class.implement('subscribable', roleAcls);
     } ());
 
-/*global merge,toArray,makeArray*/
-
     mdsol.data.roles = (function () {
         var SERVICE = 'Roles',
             TEMPLATE = {
@@ -3260,8 +3489,6 @@ mdsol.Class = (function () {
 
         return mdsol.Class.implement('subscribable', roles);
     } ());
-
-/*global merge,toArray,makeArray*/
 
     mdsol.data.serviceProperties = (function () {
         var SERVICE = 'ServiceProperties',
@@ -3300,8 +3527,6 @@ mdsol.Class = (function () {
 
         return mdsol.Class.implement('subscribable', serviceProperties);
     } ());
-
-/*global merge,toArray,makeArray*/
 
     mdsol.data.services = (function () {
         var SERVICE = 'Services',
@@ -3345,8 +3570,6 @@ mdsol.Class = (function () {
 
         return mdsol.Class.implement('subscribable', services);
     } ());
-
-/*global merge,toArray,makeArray*/
 
     mdsol.data.sites = (function () {
         var SERVICE = 'Sites',
@@ -3410,8 +3633,6 @@ mdsol.Class = (function () {
             return mdsol.Class.implement('subscribable', sites);
     } ());
 
-/*global merge,toArray,makeArray*/
-
     mdsol.data.tables = (function () {
         var SERVICE = 'Tables',
             TEMPLATE = {
@@ -3455,8 +3676,6 @@ mdsol.Class = (function () {
         return mdsol.Class.implement('subscribable', tables);
     } ());
 
-/*global merge,toArray,makeArray*/
-
     mdsol.data.users = (function () {
         var SERVICE = 'Users',
             TEMPLATE = {
@@ -3489,53 +3708,70 @@ mdsol.Class = (function () {
         return mdsol.Class.implement('subscribable', users);
     } ());
 
-/*global namespace,extend*/
+// @DONE (2013-09-17 11:11)
 
     /*
     * Use IIFE to prevent cluttering of globals
-    *
-    * NOTE: This module requires jQuery, however it should not be listed as an AMD module 
-    *       dependency. Only build-time dependencies should be listed above.
     */
     (function () {
-        function addMenu() {
-
+        function clear() {
+            return mdsol;
         }
-
-        function removeMenu() {
-
-        }
-
-        function getMenu() {
-
-        }
-
+        
         function dispose() {
             return mdsol;
         }
 
-        mdsol.session.subscribe('afterLogout', onLogout);
-        
-        function onLogout() {
-            // Reset all of the menus
-        }
-        
-        // Expose public members
-        mdsol.Class.namespace('mdsol.toolbar', {
-            addMenu: addMenu,
-
-            removeMenu: removeMenu,
-
-            getMenu: getMenu,
+        mdsol.Class.namespace('mdsol.schema', {
+            clear: clear,
 
             dispose: dispose
         });
     } ());
 
+    mdsol.schema.Field = (function () {
+        function Field() {
+            if (!(this instanceof Field)) {
+                return new Field();
+            }
+
+            return this;
+        }
+
+        return Field;
+    } ());
+
+    (function () {
+        
+        
+    } ());
+
+    mdsol.schema.Table = (function () {
+        function Table() {
+            if (!(this instanceof Table)) {
+                return new Table();
+            }
+
+            return this;
+        }
+
+        return Table;
+    } ());
+
+    mdsol.schema.TitleBar = (function () {
+        function TitleBar() {
+            if (!(this instanceof TitleBar)) {
+                return new TitleBar();
+            }
+
+            return this;
+        }
+
+        return TitleBar;
+    } ());
+
 // @DONE (2013-09-16 21:12)
 
-
-    // Expose mdsol library
-    return (window.mdsol = mdsol);
-// @DONE (2013-09-17 12:03)
+    // Expose mdsol library to global object
+    global.mdsol = mdsol;
 }(jQuery));
