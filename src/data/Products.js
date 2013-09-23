@@ -1,10 +1,10 @@
-﻿/*global merge,toArray,makeArray*/
-define([
+﻿define([
     '../core',
     '../var/keys',
+    '../core/Class',
     '../ajax/RequestMethod',
     '../ajax/UpsertMethod',
-    './RemoteData'
+    './DataTable'
 ], function (mdsol, keys) {
     mdsol.data.products = (function () {
         var SERVICE = 'Products',
@@ -19,8 +19,9 @@ define([
                 getProducts: mdsol.ajax.RequestMethod(SERVICE, 'GetProducts')
                     .fields(keys(TEMPLATE)),
                 upsertProducts: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertProducts')
-            };
+            },
+            products = mdsol.data.DataTable(TEMPLATE, _methods, 'getProducts', 'upsertProducts');
 
-        return mdsol.data.RemoteData(TEMPLATE, _methods, 'getProducts', 'upsertProducts');
+        return mdsol.Class.implement('subscribable', products);
     } ());
 });

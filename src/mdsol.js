@@ -1,15 +1,21 @@
 ﻿// @DONE (2013-09-16 21:12)
 define([
-    './core',
     './base64',
     './cookies',
+    './core',
     './json',
+    './sha1',
     './strings',
-    './ajax',
+    './var/global',
     './core/BitFlags',
     './core/Enum',
     './core/Class',
     './core/ObjectArray',
+    './ajax/ajax',
+    './abstract/api',
+    './abstract/options',
+    './abstract/control',
+    './abstract/subscribable',
     './ui/DialogBox',
     './ui/DialogPage',
     './ui/DialogSubpage',
@@ -19,21 +25,29 @@ define([
     './ui/MessageBox',
     
     // Application-specific modules:
+    './session',
+    './toolbar',
     './ajax/RequestMethod',
     './ajax/UpsertMethod',
+    './data/data',
+    './data/Clients',
+    './data/Dialogs',
+    './data/Fields',
+    './data/Keys',
+    './data/Products',
+    './data/RoleAcls',
+    './data/Roles',
+    './data/ServiceProperties',
+    './data/Services',
+    './data/Sites',
+    './data/Tables',
+    './data/Users',
+    './schema/schema',
     './schema/Field',
     './schema/Link',
     './schema/Table',
-    './schema/TitleBar',
-    './data/Clients',
-    './data/Fields',
-    './data/Products',
-    './data/Sites',
-    './data/Tables',
-    './session',
-    './toolbar'
-], function (mdsol) {
-
-    // Expose mdsol library
-    return (window.mdsol = mdsol);
+    './schema/TitleBar'
+], function (mdsol, global) {
+    // Expose mdsol library to global object
+    global.mdsol = mdsol;
 });

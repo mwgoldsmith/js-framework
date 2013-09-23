@@ -1,11 +1,50 @@
-﻿/*global clone*/
+﻿/* @DONE: 2013-09-23 07:26 */
 define([
     '../core',
     './Class'
 ], function (mdsol) {
     mdsol.Enum = (function () {
-        'use strict';
+        var _enumValue = function(v) {
+                if (v === null) {
+                    return null;
+                } else if (isNumeric(v) && this._enum[v] !== undefined) {
+                    // Verify it is a valid enum name (see: http://jsperf.com/hasownproperty-vs-in-vs-other/)
+                    return _enum[v];
+                } else if (isNumeric(v) && this._all.indexOf(v) !== -1) {
+                    // Verify it is a valid enum value
+                    return v;
+                }
 
+                throw new Error('Invalid enum value');
+            },
+            _value = function(value) {
+                if (arguments.length) {
+                    this._value = this._enumValue(value);
+                }
+
+                return this._value;
+            };
+
+        function test(value) {
+            return this._value === this._enumValue(value);
+        }
+
+        function toString() {
+            var e = this._enum, p;
+
+            for (p in e) {
+                if (e.hasOwnProperty(p) && e[p] === _value) {
+                    return p;
+                }
+            }
+
+            return null;
+        }
+
+        function valueOf() {
+            return this._enum;
+        }
+        
         function Enum(enumObj, initValue) {
             if (!(this instanceof Enum)) {
                 return new Enum(enumObj, initValue);
@@ -15,7 +54,7 @@ define([
                 var values = [], p;
 
                 for (p in o) {
-                    if (typeof o[p] !== 'number') {
+                    if (o.hasOwnProperty(p) && !isNumeric(o[p])) {
                         values = [];
                         break;
                     }
@@ -30,58 +69,27 @@ define([
                 return values;
             }
 
-            function enumValue(v) {
-                if (v === null) {
-                    return null;
-                } else if (typeof v === 'string' && _enum[v] !== undefined) {
-                    // Verify it is a valid enum name (see: http://jsperf.com/hasownproperty-vs-in-vs-other/)
-                    return _enum[v];
-                } else if (typeof v === 'number' && _all.indexOf(v) !== -1) {
-                    // Verify it is a valid enum value
-                    return v;
-                }
+            // Value must be set after extend()
+            // _enumValue() is dependand on this._enum already existing
+            return extend(this, {
+                _all: getValues(enumObj),
 
-                throw new Error('Invalid enum value');
-            }
-
-            var _all = getValues(enumObj),
-                _enum = clone(enumObj),
-                _value = initValue !== undefined ? enumValue(initValue) : null,
-                _public = {
-                    value: function (value) {
-                        if (arguments.length) {
-                            _value = enumValue(value);
-                        }
-
-                        return _value;
-                    },
-
-                    test: function (value) {
-                        return _value === enumValue(value);
-                    },
-
-                    toString: function () {
-                        var p;
-
-                        for (p in _enum) {
-                            // Not using hasOwnProperty since _enum is guaranteed to be a
-                            // simple object literal by getValues() when instantiated
-                            if (_enum[p] === _value) {
-                                return p;
-                            }
-                        }
-
-                        return null;
-                    },
-
-                    valueOf: function () {
-                        return _enum;
-                    }
-                };
-
-            return mdsol.Class(this, _public).valueOf();
+                _enum: clone(enumObj),
+                
+                _value: null
+            }).value(initValue !== undefined ? initValue : null);
         }
 
-        return Enum;
+        return mdsol.Class(Enum, {
+            _enumValue: _enumValue,
+            
+            test: test,
+            
+            toString: toString,
+            
+            value: _value, 
+            
+            valueOf: valueOf
+        }).valueOf();
     }());
 });

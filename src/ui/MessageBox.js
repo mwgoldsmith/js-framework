@@ -1,10 +1,8 @@
 ﻿define([
     '../core',
-    '../ui'
+    './ui'
 ], function (mdsol) {
     mdsol.ui.MessageBox = (function () {
-        'use strict';
-
         var _buttonEnum = {
             OK: 1
         };

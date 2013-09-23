@@ -1,5 +1,5 @@
-﻿/*global DONT_ENUM_BUG*/
-define([
+﻿define([
+    './var/dontEnumBug',
     './var/global',
     './var/natives',
     './var/hasOwnProperty',
@@ -8,38 +8,17 @@ define([
     './var/toString',
     './var/isArray',
     './var/keys'
-], function (global, natives, hasOwnProperty, push, slice, toString, isArray, keys) {
-    function namespace(identifier, objects) {
-        var ns = global, parts, i, item;
-
-        if (identifier !== '') {
-            parts = identifier.split('.');
-            for (i = 0; i < parts.length; i++) {
-                if (!ns[parts[i]]) {
-                    ns[parts[i]] = {};
-                }
-
-                ns = ns[parts[i]];
-            }
-        }
-
-        if (!objects) {
-            return ns;
-        }
-
-        for (item in objects) {
-            if (objects.hasOwnProperty(item)) {
-                ns[item] = objects[item];
-            }
-        }
-
-        return ns;
-    }
-
+], function (dontEnumBug, global, natives, hasOwnProperty, push, slice, toString, isArray, keys) {
+    var mdsol;
+    
     function error(msg) {
         throw new Error(msg);
     }
 
+    function now() {
+        return (new Date()).getTime();
+    }
+    
     /*
     * Checks if the provided object is a string.
     */
@@ -50,7 +29,7 @@ define([
     /*
     * Checks if the provided object is a number.
     */
-    function isNumber(obj) {
+    function isNumeric(obj) {
         return obj - parseFloat(obj) >= 0;
     }
 
@@ -87,8 +66,8 @@ define([
         try {
             // Not own constructor property must be Object
             if (obj.constructor &&
-                    !hasOwnProperty.call(obj, 'constructor') &&
-                    !hasOwnProperty.call(obj.constructor.prototype, 'isPrototypeOf')) {
+                !hasOwnProperty.call(obj, 'constructor') &&
+                !hasOwnProperty.call(obj.constructor.prototype, 'isPrototypeOf')) {
                 return false;
             }
         } catch (e) {
@@ -98,7 +77,8 @@ define([
 
         // Own properties are enumerated firstly, so to speed up,
         // if last one is own, then all properties are own.
-        for (key in obj) { }
+        for (key in obj) {
+        }
 
         return key === undefined || hasOwnProperty.call(obj, key);
     }
@@ -204,8 +184,8 @@ define([
 
             result = {};
 
-            // See comment in declaration of DONT_ENUM_BUG for details
-            if (DONT_ENUM_BUG) {
+            // See comment in declaration of dontEnumBug for details
+            if (dontEnumBug) {
                 safeCopyProperty(result, obj, ['toString', 'valueOf']);
             }
 
@@ -223,10 +203,10 @@ define([
 
     function extend(/*[ deep,] target, srcA[, srcB[, ...]] */) {
         var a = slice.call(arguments),
-                shallow = true,
-                tgt, src,
-                o, p, i, v,
-                len;
+            shallow = true,
+            tgt, src,
+            o, p, i, v,
+            len;
 
         if (typeof a[0] === 'boolean') {
             shallow = !a.shift();
@@ -239,8 +219,8 @@ define([
         for (i = 0, len = src.length; i < len; i++) {
             o = src[i] || {};
 
-            // See comment in declaration of DONT_ENUM_BUG for details
-            if (DONT_ENUM_BUG) {
+            // See comment in declaration of dontEnumBug for details
+            if (dontEnumBug) {
                 safeCopyProperty(tgt, o, ['toString', 'valueOf']);
             }
 
@@ -353,9 +333,9 @@ define([
             return wrapper.apply(this, args);
         };
     }
-
+    
     // Extend our base object with our public methods
-    namespace('mdsol', {
+    global.mdsol = mdsol = {
         clone: clone,
 
         each: each,
@@ -378,7 +358,7 @@ define([
 
         isFunction: isFunction,
 
-        isNumber: isNumber,
+        isNumeric: isNumeric,
 
         isObject: isObject,
 
@@ -394,10 +374,10 @@ define([
 
         merge: merge,
 
-        namespace: namespace,
-
         noop: noop,
 
+        now: now,
+        
         proxy: proxy,
 
         toArray: toArray,
@@ -405,5 +385,5 @@ define([
         values: values,
 
         wrap: wrap
-    });
+    };
 });

@@ -1,15 +1,10 @@
-﻿/*global extend*/
-// @DONE (2013-09-17 11:03)
+﻿// @DONE (2013-09-23 18:52)
 define([
     './core',
     './var/global'
 ], function (mdsol, global) {
-    /*
-    * Use IIFE to prevent cluttering of globals
-    */
-    (function () {
-        function getCookie(name) {
-            var cookies = global.document.cookie.split(';')
+    function getCookie(name) {
+        var cookies = global.document.cookie.split(';')
                 .map(
                     function (x) { return x.trim().split(/(=)/); })
                 .reduce(
@@ -18,30 +13,29 @@ define([
                         return a;
                     }, {});
 
-            return cookies[name];
-        }
+        return cookies[name];
+    }
 
-        function setCookie(name, value, domain, expiration) {
-            global.document.cookie = name + '=' + value 
-                + (expiration ? '; expires=' + expiration : '') 
-                + (domain ? '; domain=' + domain : '') 
+    function setCookie(name, value, domain, expiration) {
+        global.document.cookie = name + '=' + value
+                + (expiration ? '; expires=' + expiration : '')
+                + (domain ? '; domain=' + domain : '')
                 + '; path=/';
 
-            return mdsol;
-        }
+        return mdsol;
+    }
 
-        function deleteCookie(name) {
-            global.document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    function deleteCookie(name) {
+        global.document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 
-            return mdsol;
-        }
-        
-        extend(mdsol, {
-            getCookie: getCookie,
+        return mdsol;
+    }
 
-            setCookie: setCookie,
+    extend(mdsol, {
+        getCookie: getCookie,
 
-            deleteCookie: deleteCookie
-        });
-    } ());
+        setCookie: setCookie,
+
+        deleteCookie: deleteCookie
+    });
 });

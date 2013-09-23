@@ -1,11 +1,102 @@
-﻿/*global clone,toArray*/
+﻿/* @DONE: 2013-09-23 07:26 */
 define([
     '../core',
     '../var/slice',
     './Class'
 ], function (mdsol, slice) {
     mdsol.BitFlags = (function () {
-        'use strict';
+        var _flagValue = function (flag) {
+                /* @flag = name | value */
+                var value, f;
+
+                if (isString(flag)) {
+                    // Verify the flag name exists
+                    f = this._flags[flag];
+                    value = f !== undefined ? f : null;
+                } else if (isNumeric(flag)) {
+                    // Verify value is a possible valid combination of flags
+                    value = ((flag & this._entropy) === flag) ? flag : null;
+                } else {
+                    // Invalid data type
+                    value = null;
+                }
+
+                if (value === null) {
+                    throw new Error('Invalid bit flag value');
+                }
+
+                return value;
+            },
+            _test = function (any, flags) {
+                /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
+                var f, i, match = !any;
+
+                for (i = flags.length; i--; ) {
+                    f = this._flagValue(flags[i]);
+
+                    // Test if the flag is set
+                    if (!match || !any) {
+                        if ((f & this._value) === f) {
+                            if (any) {
+                                match = true;
+                            }
+                        } else if (!any) {
+                            match = false;
+                        }
+                    }
+                }
+
+                return match;
+            },
+            _bitFlags = function (flags) {
+                /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
+                var i, value = 0;
+
+                // Combine flag(s) to set
+                for (i = flags.length; i--; ) {
+                    value = value | this._flagValue(flags[i]);
+                }
+
+                return value;
+            },
+            _value = function () {
+                if (arguments.length) {
+                    this._value = this._bitFlags(slice.call(arguments));
+                }
+
+                return this._value;
+            };
+
+        function equals() {
+            return this._value === this._bitFlags(slice.call(arguments));
+        }
+
+        function test() {
+            return this._test(false, slice.call(arguments));
+        }
+
+        function testAny() {
+            return this._test(true, slice.call(arguments));
+        }
+
+        function toString() {
+            var names = [],
+                f = this._flags,
+                p;
+
+            // Create array of flag names which are currently set
+            for (p in f) {
+                if (f.hasOwnProperty(p) && this._test(true, p)) {
+                    names.push(p);
+                }
+            }
+
+            return names.toString();
+        }
+
+        function valueOf() {
+            return this._flags;
+        }
 
         function BitFlags(flagsObject, initValue) {
             if (!(this instanceof BitFlags)) {
@@ -17,7 +108,7 @@ define([
 
                 // Get combined value of all flags
                 for (f in flags) {
-                    if (typeof flags[f] !== 'number') {
+                    if (flags.hasOwnProperty(f) && !isNumeric(flags[f])) {
                         all = 0;
                         break;
                     }
@@ -32,111 +123,33 @@ define([
                 return all;
             }
 
-            /* @flag = name | value */
-            function flagValue(flag) {
-                var value;
-
-                if (typeof flag === 'string') {
-                    // Verify the flag name exists
-                    flag = _flags[flag];
-                    value = flag !== undefined ? flag : null;
-                } else if (typeof flag === 'number') {
-                    // Verify value is a possible valid combination of flags
-                    value = ((flag & _entropy) === flag) ? flag : null;
-                } else {
-                    // Invalid data type
-                    value = null;
-                }
-
-                if (value === null) {
-                    throw new Error('Invalid bit flag value');
-                }
-
-                return value;
-            }
-
-            /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
-            function test(any, flags) {
-                var f, i, match = !any;
-
-                for (i = flags.length; i--;) {
-                    f = flagValue(flags[i]);
-
-                    // Test if the flag is set
-                    if (!match || !any) {
-                        if ((f & _value) === f) {
-                            if (any) {
-                                match = true;
-                            }
-                        } else if (!any) {
-                            match = false;
-                        }
-                    }
-                }
-
-                return match;
-            }
-
-            /* @flags = [nameA[, nameB[, ...]]] | [valueA[, valueB[, ...]]] */
-            function bitFlags(flags) {
-                var i, value = 0;
-
-                // Combine flag(s) to set
-                for (i = flags.length; i--;) {
-                    value = value | flagValue(flags[i]);
-                }
-
-                return value;
-            }
-
-            var _flags = clone(flagsObject),
-                _entropy = getMaxValue(_flags),
-                _value = initValue !== undefined ? bitFlags(toArray(initValue)) : 0,
-                _public = {
-                    value: function () {
-                        if (arguments.length) {
-                            _value = bitFlags(slice.call(arguments));
-                        }
-
-                        return _value;
-                    },
-
-                    equals: function () {
-                        return _value === bitFlags(slice.call(arguments));
-                    },
-
-                    test: function () {
-                        return test(false, slice.call(arguments));
-                    },
-
-                    testAny: function () {
-                        return test(true, slice.call(arguments));
-                    },
-
-                    toString: function () {
-                        var names = [],
-                            p;
-
-                        // Create array of flag names which are currently set
-                        for (p in _flags) {
-                            // Not using hasOwnProperty since _flags is guaranteed to be a
-                            // simple object literal by getMaxValue() when instantiated
-                            if (test(true, p)) {
-                                names.push(p);
-                            }
-                        }
-
-                        return names.toString();
-                    },
-
-                    valueOf: function () {
-                        return _flags;
-                    }
-                };
-
-            return mdsol.Class(this, _public).valueOf();
+            // Value must be set after extend()
+            // _bitFlags() is dependand on this._flags already existing
+            return extend(this, {
+                _entropy: getMaxValue(flagsObject),
+                
+                _flags: clone(flagsObject)
+            }).value(initValue !== undefined ? toArray(initValue) : 0);
         }
 
-        return BitFlags;
-    }());
+        return mdsol.Class(BitFlags, {
+            _flagValue: _flagValue,
+
+            _test: _test,
+
+            _bitFlags: _bitFlags,
+
+            equals: equals,
+
+            test: test,
+
+            testAny: testAny,
+
+            toString: toString,
+
+            value: _value,
+
+            valueOf: valueOf
+        }).valueOf();
+    } ());
 });

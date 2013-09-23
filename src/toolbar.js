@@ -1,7 +1,7 @@
-﻿/*global namespace,extend*/
-// @DONE (2013-09-17 11:10)
-define([
-    './core'
+﻿define([
+    './core',
+    './session',
+    './core/Class'
 ], function (mdsol) {
     /*
     * Use IIFE to prevent cluttering of globals
@@ -10,12 +10,36 @@ define([
     *       dependency. Only build-time dependencies should be listed above.
     */
     (function () {
+        function addMenu() {
+
+        }
+
+        function removeMenu() {
+
+        }
+
+        function getMenu() {
+
+        }
+
         function dispose() {
             return mdsol;
         }
 
+        mdsol.session.subscribe('afterLogout', onLogout);
+        
+        function onLogout() {
+            // Reset all of the menus
+        }
+        
         // Expose public members
-        namespace('mdsol.toolbar', {
+        mdsol.Class.namespace('mdsol.toolbar', {
+            addMenu: addMenu,
+
+            removeMenu: removeMenu,
+
+            getMenu: getMenu,
+
             dispose: dispose
         });
     } ());

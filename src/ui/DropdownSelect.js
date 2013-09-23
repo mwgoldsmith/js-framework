@@ -1,10 +1,8 @@
 ﻿define([
     '../core',
-    '../ui'
+    './ui'
 ], function (mdsol) {
     mdsol.ui.DropdownSelect = (function () {
-        'use strict';
-
         function DropdownSelect() {
             if (!(this instanceof DropdownSelect)) {
                 return new DropdownSelect();

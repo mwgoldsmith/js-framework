@@ -1,10 +1,8 @@
 ﻿define([
     '../core',
-    '../schema'
+    './schema'
 ], function (mdsol) {
     mdsol.schema.TitleBar = (function () {
-        'use strict';
-
         function TitleBar() {
             if (!(this instanceof TitleBar)) {
                 return new TitleBar();

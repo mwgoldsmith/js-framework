@@ -34,18 +34,18 @@
             this.objGetPrivate = function () { return _private; };
             this.objSetPrivate = function (funcArgs) { _private = funcArgs; };
             this.sharedGetPrivate = function () {
-                return mdsol.Class.base(this, []);
+                return this.base([]);
             };
 
             this.sharedSetPrivate = function (arg) {
-                return mdsol.Class.base(this, arg);
+                return this.base(arg);
             };
 
             this.objFailFunc = function (arg) {
-                return mdsol.Class.base(this, arg);
+                return this.base(arg);
             };
 
-            return mdsol.Class.base(this, args);
+            return this.base(args);
         }
 
         return TestConstructorWithBase;
@@ -56,7 +56,10 @@
             propShared: 'proto:BaseTestConstructor',
             protoBasePropA: 4,
             protoBasePropB: 'D',
-            protoBaseGetPropShared: function () { return this.propShared; }
+            protoBaseGetPropShared: function () { return this.propShared; },
+
+            sharedGetPrivate: function () { return this.propShared; },
+            sharedSetPrivate: function (funcArgs) { this.propShared = funcArgs; }
         };
     }
 
@@ -70,8 +73,6 @@
             this.basePropArgs = args;
             this.baseGetPrivate = function () { return _private; };
             this.baseSetPrivate = function (funcArgs) { _private = funcArgs; };
-            this.sharedGetPrivate = function () { return _private; };
-            this.sharedSetPrivate = function (funcArgs) { _private = funcArgs; };
         }
 
         return BaseTestConstructor;
@@ -178,7 +179,7 @@
         result = new NewConstructor('arg');
 
         strictEqual(result.basePropA, 3, 'base constructor is called');
-        equal(result.propShared, 'this:TestConstructorWithBase', 'this of base constructor is in context of base prototype');
+        equal(result.propShared, 'this:BaseTestConstructor', 'this of base constructor is in context of object');
         equal(result.basePropArgs, 'arg', 'arguments are passed to base constructor');
     });
 

@@ -1,5 +1,4 @@
-﻿/*global merge,toArray,makeArray*/
-define([
+﻿define([
     '../core',
     '../var/push',
     './Method',
@@ -8,87 +7,98 @@ define([
     mdsol.ajax.RequestMethod = (function () {
         var DEFAULT_PARAMS = ['audit_info', 'field_filter'];
 
-        function RequestMethod(service, method, params) {
-            if (!(this instanceof RequestMethod)) {
-                return new RequestMethod(service, method, params);
+        function audit(value) {
+            if (!arguments.length) {
+                return this._audit;
             }
 
-            var _audit = false,
-                _fields = [],
-                _public = {
-                    audit: function (value) {
-                        if (!arguments.length) {
-                            return _audit;
-                        }
+            this._audit = !!value;
 
-                        _audit = !!value;
-
-                        return this;
-                    },
-
-                    fields: function (/* varArgs */) {
-                        var value;
-
-                        if (!arguments.length) {
-                            return _fields;
-                        }
-
-                        if (arguments.length === 1) {
-                            value = arguments[0];
-                            _fields = value === null ? [] : toArray(value);
-                        } else {
-                            _fields = makeArray(arguments);
-                        }
-
-                        return this;
-                    },
-
-                    params: function () {
-                        var curParams, value,
-                            args = [this];
-
-                        if (!arguments.length) {
-                            curParams = mdsol.Class.base(this);
-
-                            // Get params from base; exclude defaul parameters
-                            return curParams.filter(function (el/*, idx, arr*/) {
-                                return DEFAULT_PARAMS.indexOf(el) === -1;
-                            });
-                        }
-
-                        if (arguments.length === 1) {
-                            value = arguments[0];
-                            if (value !== null) {
-                                push.apply(args, toArray(value));
-                            }
-                        } else {
-                            push.apply(args, arguments);
-                        }
-
-                        push.apply(args, DEFAULT_PARAMS);
-
-                        return mdsol.Class.base.apply(this, args);
-                    },
-
-                    execute: function (/* [apiParamVal1][, apiParamVal2][, ...] */) {
-                        var args = [this];
-
-                        push.apply(args, arguments);
-                        push.apply(args, [_audit ? 'y' : 'n', _fields.join(',')]);
-
-                        return mdsol.Class.base.apply(this, args);
-                    },
-
-                    dispose: function () {
-                        // Perform any cleanup
-                    }
-                };
-
-            return mdsol.Class(this, _public)
-                .base(service, method, toArray(params).concat(DEFAULT_PARAMS))
-                .valueOf();
+            return this;
         }
 
-        return mdsol.Class(RequestMethod).inherits(mdsol.ajax.Method).valueOf();
+        function fields(/* varArgs */) {
+            var value;
+
+            if (!arguments.length) {
+                return this._fields;
+            }
+
+            if (arguments.length === 1) {
+                value = arguments[0];
+                value = value === null ? [] : toArray(value);
+            } else {
+                value = makeArray(arguments);
+            }
+            
+            this._fields = value;
+            
+            return this;
+        }
+
+        function params() {
+            var curParams, value,
+                args;
+
+            if (!arguments.length) {
+                curParams = this.base();
+
+                // Get params from base; exclude defaul parameters
+                return curParams.filter(function (el/*, idx, arr*/) {
+                    return DEFAULT_PARAMS.indexOf(el) === -1;
+                });
+            }
+
+            if (arguments.length === 1) {
+                value = arguments[0];
+                args = value === null ? [] : toArray(value);
+            } else {
+                args = makeArray(arguments);
+            }
+
+            push.apply(args, DEFAULT_PARAMS);
+
+            return this.base.apply(this, args);
+        }
+
+        function execute(/* [apiParamVal1][, apiParamVal2][, ...] */) {
+            var args = makeArray(arguments);
+
+            push.apply(args, [this._audit ? 'y' : 'n', this._fields.join(',')]);
+
+            return this.base.apply(this, args);
+        }
+
+        function dispose() {
+            // TODO: Implement
+        }
+
+        function RequestMethod(service, method, reqParams) {
+            if (!(this instanceof RequestMethod)) {
+                return new RequestMethod(service, method, reqParams);
+            }
+
+            return extend(this, {
+                    _audit: false,
+
+                    _fields: []
+                })
+                .base(service, method)
+                .params(reqParams || []);
+        }
+
+        return mdsol.Class(RequestMethod, {
+                audit: audit,
+
+                fields: fields,
+
+                params: params,
+
+                execute: execute,
+
+                dispose: dispose
+            })
+            .inherits(mdsol.ajax.Method)
+            .valueOf();
     } ());
 });

@@ -1,147 +1,162 @@
 ﻿define([
-    '../core'
-], function (mdsol) {
+    '../core',
+    '../var/global'
+], function (mdsol, global) {
     mdsol.Class = (function () {
-        function inherits(child, parent) {
-            child.parent_ = parent.prototype;
-            child.prototype = extend(Object.create(parent.prototype), child.prototype);
-            child.prototype.constructor = child;
+        var _funcTest = /xyz/.test(function () { var xyz = 0; return xyz; }) ? /\bbase\b/ : /.*/,
+            _isInstance = function (obj) {
+                return isObject(obj) && !isPlainObject(obj);
+            },
+            _namespace = function (identifier, objects) {
+                var ns = global, parts, i, item;
 
-            return child;
-        }
+                if (identifier !== '') {
+                    parts = identifier.split('.');
+                    for (i = 0; i < parts.length; i++) {
+                        if (!ns[parts[i]]) {
+                            ns[parts[i]] = {};
+                        }
 
-        function base(/* [, argA[, argB[, ...]]] */) {
-            var caller = arguments.callee.caller,
-                target, that, f,
-                baseProto, baseFunc;
-
-            if (mdsol.DEBUG && !caller) {
-                throw new Error('base() cannot run in strict mode: arguments.caller not defined.');
-            }
-
-            // Ugliy fix for the fact that both Class.base() and Class().base() call
-            // this function using apply(). We need the function which called that
-            // method.
-            caller = caller.caller;
-
-            // If this is not a constructor, call the superclass method
-            if (!caller.parent_) {
-                return caller.super_.apply(this, arguments);
-            }
-
-            target = caller.parent_.constructor;
-            baseProto = this;
-
-            // Walk the prototype chain until we find [[Prototype]]
-            // for the base
-            while (baseProto) {
-                if (baseProto.constructor === target) {
-                    break;
+                        ns = ns[parts[i]];
+                    }
                 }
 
-                baseProto = Object.getPrototypeOf(baseProto);
-            }
-
-            // Call the base class constructor in the context of its own
-            // [[Prototype]]. NOTE: This will cause the base constructor
-            // to fail to recognize it is instantiated using instanceof.
-            that = target.apply(baseProto, arguments);
-            if (that !== undefined) {
-                // Allow return value to override value of `this` to be
-                // consistant with typical constructor behaviour. See:
-                // http://www.ecma-international.org/ecma-262/5.1/#sec-13.2.2
-                // If the constructor returned a value for `this`, it is
-                // safe to assume it auto-instantiated. To preserve any
-                // public members exposed, move them to the [[Prototype]]
-                // of base.
-                extend(baseProto, that);
-            }
-
-            // Set a reference to the super method for each method on the
-            // object which also exists on the base. This way, every call
-            // to base() from a method will just need to retreive that 
-            // value instead of finding the base proto first.
-            for (f in this) {
-                baseFunc = isFunction(this[f]) && baseProto[f];
-                if (isFunction(baseFunc)) {
-                    this[f].super_ = baseFunc;
+                for (item in objects || {}) {
+                    if (objects.hasOwnProperty(item)) {
+                        ns[item] = objects[item];
+                    }
                 }
-            }
 
-            return this;
-        }
+                return ns;
+            },
+            _wrappedSub = function (that, superFunc, subFunc) {
+                return (function (t, sup, sub) {
+                    return function () {
+                        var ret,
+                            tmp = t.base;
 
-        function Class(obj, proto) {
-            var _class = obj,
-                _isInstance = !isPlainObject(obj) && isObject(_class),
-                _isConstructor = !_isInstance && isFunction(_class),
-                _public = {
-                    mixin: function (/*sourceA [, sourceB[, ...]] */) {
-                        var a = makeArray(arguments),
-                            mixer;
+                        t.base = sup;
+                        ret = sub.apply(t, arguments);
+                        t.base = tmp;
 
-                        // See http://jsperf.com/mixin-fun/2
-                        while (a.length) {
-                            mixer = a.shift();
-                            if (!mixer || !(isFunction(mixer) || isObject(mixer))) {
-                                throw new Error('Invalid data type for mixin.');
+                        return ret;
+                    };
+                })(that, superFunc, subFunc);
+            },
+            _inherits = function (child, parent) {
+                var _super;
+
+                if (_isInstance(child)) {
+                    throw new Error('An already instantiated object cannot inherit from another object.');
+                } else if (!parent || !isFunction(parent)) {
+                    throw new Error('Invalid base constructor.');
+                }
+
+                _super = parent.prototype;
+                child.prototype = extend(Object.create(_super), child.prototype, {
+                    constructor: child,
+
+                    base: (function (sup) {
+                        return function () {
+                            var p, m, s;
+
+                            // For each method on the subclass which calls the superclass, provide
+                            // a wrapped function which exposes a direct reference to the superclass
+                            // function within its execution context.
+                            for (p in this) {
+                                m = this[p];
+                                s = sup[p];
+
+                                if (isFunction(m) && isFunction(s) && _funcTest.test(m)) {
+                                    this[p] = _wrappedSub(this, s, m);
+                                }
                             }
 
-                            mixer.call(_class.prototype);
+                            // Call the superclass constructor
+                            sup.constructor.apply(this, arguments);
+
+                            return this;
+                        };
+                    } (_super))
+                });
+
+                return child;
+            },
+            _implement = function (objects, target) {
+                var objs = toArray(objects),
+                    i, len, item, m;
+
+                for (i = 0, len = objs.length; i < len; i++) {
+                    item = objs[i];
+                    if (isString(item)) {
+                        item = mdsol.abstract[item];
+                        if (!item) {
+                            throw new Error('Unknown abstract object: "' + objs[i] + '"');
                         }
-
-                        return _public;
-                    },
-
-                    inherits: function (baseConstructor) {
-                        if (_isInstance) {
-                            throw new Error('An already instantiated object cannot inherit from another object.');
-                        } else if (!base || !isFunction(baseConstructor)) {
-                            throw new Error('Invalid base constructor.');
+                        debugger;
+                        // Copy the properties from the object to the target only if
+                        // the target doesn't have an Own property of the same name
+                        item = Object.create(item);
+                        for (m in item) {
+                            if (item.hasOwnProperty(m) && !target.hasOwnProperty(m)) {
+                                target[m] = item[m];
+                            }
                         }
-
-                        inherits(_class, baseConstructor);
-
-                        return _public;
-                    },
-
-                    extend: function (members) {
-                        var target = _isConstructor ? _class : _class.constructor;
-
-                        extend(true, target, members);
-
-                        return _public;
-                    },
-
-                    base: function () {
-                        _class = base.apply(_class, arguments);
-                        return _public;
-                    },
-
-                    valueOf: function () {
-                        return _class;
                     }
-                };
+                }
 
-            if (!_isInstance && !_isConstructor) {
+                return target;
+            };
+
+        function Class(obj, proto) {
+            if (!(this instanceof Class)) {
+                return new Class(obj, proto);
+            }
+
+            var _class = obj,
+                _instance = _isInstance(_class);
+
+            function inherits(parent) {
+                _inherits(_class, parent);
+
+                return this;
+            }
+
+            function implement(objects) {
+                _implement(objects, _instance ? _class : _class.prototype);
+
+                return this;
+            }
+
+            function valueOf() {
+                return _class;
+            }
+
+            if (!_instance && !isFunction(_class)) {
                 throw new Error('Class object must be a constructor or an instance.');
             } else if (proto !== undefined && !isPlainObject(proto)) {
                 throw new Error('Prototype must be an object literal.');
             }
 
             if (proto) {
-                extend(true, _isInstance ? obj : obj.prototype, proto);
+                extend(true, _instance ? obj : obj.prototype, proto);
             }
 
-            return _public;
+            return extend(this, {
+                inherits: inherits,
+
+                implement: implement,
+
+                valueOf: valueOf
+            });
         };
 
         return extend(Class, {
-            inherits: inherits,
+            inherits: _inherits,
 
-            base: function (that) {
-                return base.apply(that, makeArray(arguments, 1));
-            }
+            implement: _implement,
+
+            namespace: _namespace
         });
     } ());
 });

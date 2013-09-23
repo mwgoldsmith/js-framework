@@ -1,10 +1,10 @@
-﻿/*global merge,toArray,makeArray*/
-define([
+﻿define([
     '../core',
     '../var/keys',
+    '../core/Class',
     '../ajax/RequestMethod',
     '../ajax/UpsertMethod',
-    './RemoteData'
+    './DataTable'
 ], function (mdsol, keys) {
     mdsol.data.fields = (function () {
         var SERVICE = 'Fields',
@@ -43,8 +43,9 @@ define([
                     .params('site_id', 'table_id')
                     .fields(_maxFields),
                 upsertFields: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertFields')
-            };
+            },
+            fields = mdsol.data.DataTable(TEMPLATE, _methods, 'getKeyFieldsByTableId', 'upsertFields');
 
-        return mdsol.data.RemoteData(TEMPLATE, _methods, 'getKeyFieldsByTableId', 'upsertFields');
+        return mdsol.Class.implement('subscribable', fields);
     } ());
 });

@@ -1,9 +1,9 @@
 ﻿define([
     '../core',
-    '../schema'
+    './schema'
 ], function (mdsol) {
     (function () {
-        'use strict';
+        
         
     } ());
 });

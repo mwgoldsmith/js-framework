@@ -1,9 +1,10 @@
-﻿/*global DONT_ENUM_BUG*/
+﻿/*global dontEnumBug*/
 // @DONE (2013-09-17 10:20)
 define([
     './natives',
+    './dontEnumBug',
     './hasOwnProperty'
-], function (natives, hasOwnProperty) {
+], function (natives, dontEnumBug, hasOwnProperty) {
     return (function () {
         var keys = natives['[object Object]'].constructor.keys,
             dontEnum = [
@@ -42,7 +43,7 @@ define([
                     }
                 }
 
-                if (DONT_ENUM_BUG) {
+                if (dontEnumBug) {
                     for (i = 0, len = dontEnum.lngth; i < len; i++) {
                         if (hasOwnProperty.call(obj, dontEnum[i])) {
                             result.push(dontEnum[i]);

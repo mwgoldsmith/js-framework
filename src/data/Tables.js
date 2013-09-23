@@ -1,9 +1,9 @@
-﻿/*global merge,toArray,makeArray*/
-define([
+﻿define([
     '../core',
+    '../core/Class',
     '../ajax/RequestMethod',
     '../ajax/UpsertMethod',
-    './RemoteData'
+    './DataTable'
 ], function (mdsol) {
     mdsol.data.tables = (function () {
         var SERVICE = 'Tables',
@@ -42,8 +42,9 @@ define([
                     .params('site_id', 'environment_display', 'table_id')
                     .fields(_usageFields),
                 upsertTables: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertTables')
-            };
+            },
+            tables = mdsol.data.DataTable(TEMPLATE, _methods, 'getTablesBySiteId', 'upsertTables');
 
-        return mdsol.data.RemoteData(TEMPLATE, _methods, 'getTablesBySiteId', 'upsertTables');
+        return mdsol.Class.implement('subscribable', tables);
     } ());
 });

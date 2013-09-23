@@ -2,19 +2,26 @@ module.exports = function (grunt) {
     'use strict';
 
     var rdefineEnd = /\}\);[^}\w]*$/,
-    // This is temporary until the skipSemiColonInsertion option makes it to NPM
         requirejs = require('../r'),
         config = {
             baseUrl: 'src',
+            
             name: 'mdsol',
+            
             out: 'dist/mdsol.js',
+            
             // We have multiple minify steps
             optimize: 'none',
+            
+            useStrict: true,
+
             skipSemiColonInsertiodn: true,
+            
             wrap: {
-                startFile: 'src/intro.js',
-                endFile: 'src/outro.js'
+                start: '(function($, undefined) {\n    \'use strict\';\n',
+                end: '}(jQuery));'
             },
+            
             onBuildWrite: convert
         };
 
@@ -29,19 +36,13 @@ module.exports = function (grunt) {
                 .replace(/define\([\w\W]*?return/, 'var ' + (/var\/([\w-]+)/.exec(name)[1]) + ' =')
                 .replace(rdefineEnd, '');
         } else {
-            // Ignore mdsol's return statement (the only necessary one)
-            if (name !== 'mdsol') {
-                contents = contents
-                    .replace(/\s*return\s+[^\}]+(\}\);[^\w\}]*)$/, '$1');
-            } 
-            
-            // Remove define wrappers, closure ends, and empty declarations
-            contents = contents
-                .replace(/define\([^{]*?{/, '')
-                .replace(rdefineEnd, '');
+            grunt.log.writeln(name);
 
-            // Remove empty definitions
+            // Remove define wrappers, closure ends, and empty declarations and empty definitions
             contents = contents
+                .replace(/\s*return\s+[^\}]+(\}\);[^\w\}]*)$/, '$1')
+                .replace(/define\([^{]*?{/, '')
+                .replace(rdefineEnd, '')
                 .replace(/define\(\[[^\]]+\]\)[\W\n]+$/, '');
         }
         return contents;
@@ -55,9 +56,7 @@ module.exports = function (grunt) {
                 name = this.data.dest,
                 included = [],
                 version = grunt.config('pkg.version');
-            grunt.log.writeln(typeof flags);
-            grunt.log.writeln(flags);
-            grunt.log.writeln(name);
+
             // figure out which files to exclude based on these rules in this order:
             //  dependency explicit exclude
             //  > explicit exclude
@@ -81,8 +80,10 @@ module.exports = function (grunt) {
             config.include = included;
 
             config.out = function (compiled) {
-                // Embed version and date
+                // Embed version and date, cleanup CR LFs
                 compiled = compiled
+                    .replace(/\r\n/g, '\n')
+                    .replace(/\n\n+/g, '\n\n')
                     .replace(/@VERSION/g, version)
                     .replace(/@DATE/g, (new Date()).toISOString().replace(/:\d+\.\d+Z$/, 'Z'));
 

@@ -1,10 +1,10 @@
-﻿/*global merge,toArray,makeArray*/
-define([
+﻿define([
     '../core',
     '../var/keys',
+    '../core/Class',
     '../ajax/RequestMethod',
     '../ajax/UpsertMethod',
-    './RemoteData'
+    './DataTable'
 ], function (mdsol, keys) {
     mdsol.data.sites = (function () {
         var SERVICE = 'Sites',
@@ -22,6 +22,7 @@ define([
                 active: 'Y'
             },
             _request = mdsol.ajax.RequestMethod,
+            _upsert = mdsol.ajax.UpsertMethod,
             _minFields = [
                 'id',
                 'client_id', 
@@ -59,10 +60,11 @@ define([
                     .fields(_maxFields),
                 encryptSiteCredentials: mdsol.ajax.Method(SERVICE, 'EncryptSiteCredentials')
                     .params('username', 'password'),
-                upsertSites: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertSites'),
-                upsertServiceSites: mdsol.ajax.UpsertMethod(SERVICE, 'UpsertServiceSites')
-            };
+                upsertSites: _upsert(SERVICE, 'UpsertSites'),
+                upsertServiceSites: _upsert(SERVICE, 'UpsertServiceSites')
+            },
+            sites = mdsol.data.DataTable(TEMPLATE, _methods, 'getSitesByProductId', 'upsertSites');
 
-        return mdsol.data.RemoteData(TEMPLATE, _methods, 'getSitesByProductId', 'upsertSites');
+            return mdsol.Class.implement('subscribable', sites);
     } ());
 });

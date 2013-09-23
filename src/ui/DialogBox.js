@@ -1,10 +1,8 @@
 ﻿define([
     '../core',
-    '../ui'
+    './ui'
 ], function (mdsol) {
     mdsol.ui.DialogBox = (function () {
-        'use strict';
-
         function DialogBox() {
             if (!(this instanceof DialogBox)) {
                 return new DialogBox();

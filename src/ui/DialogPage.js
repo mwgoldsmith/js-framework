@@ -1,10 +1,8 @@
 ﻿define([
     '../core',
-    '../ui'
+    './ui'
 ], function (mdsol) {
     mdsol.ui.DialogPage = (function () {
-        'use strict';
-
         function DialogPage() {
             if (!(this instanceof DialogPage)) {
                 return new DialogPage();

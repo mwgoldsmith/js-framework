@@ -68,8 +68,8 @@
         // TODO: Create tests
     });
 
-    test('isNumber', function () {
-        ok(typeof mdsol.isNumber === 'function', 'exists');
+    test('isNumeric', function () {
+        ok(typeof mdsol.isNumeric === 'function', 'exists');
 
         // TODO: Create tests
     });
@@ -112,12 +112,6 @@
 
     test('merge', function () {
         ok(typeof mdsol.merge === 'function', 'exists');
-
-        // TODO: Create tests
-    });
-
-    test('namespace', function () {
-        ok(typeof mdsol.namespace === 'function', 'exists');
 
         // TODO: Create tests
     });

@@ -1,7 +1,6 @@
-﻿/*global noop,makeArray,clone,isFunction,isArray,extend*/
-define([
+﻿define([
     '../core',
-    '../ajax',
+    './ajax',
     '../core/BitFlags',
     '../ui/MessageBox'
 ], function (mdsol) {
@@ -44,11 +43,13 @@ define([
 
             if (arguments.length === 1) {
                 value = arguments[0];
-                this._params = value === null ? [] : toArray(value);
+                value = value === null ? [] : toArray(value);
             } else {
-                this._params = makeArray(arguments);
+                value = makeArray(arguments);
             }
-
+            
+            this._params = value;
+            
             return this;
         }
 
@@ -136,8 +137,6 @@ define([
                 msgboxOptions.text = error;
                 mdsol.ui.MessageBox(msgboxOptions);
             }
-
-            return true;
         }
 
         function errorLine(name, message, rawText) {
@@ -225,7 +224,7 @@ define([
 
                 _params: toArray(parameters) || [],
 
-                _callback: noop,
+                _callback: null,
 
                 status: mdsol.BitFlags(_statusFlags, 'NONE')
             });
