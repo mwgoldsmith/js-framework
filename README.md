@@ -1,2 +1,2 @@
-mdsol-js-framework
-==================
+js-framework
+============
